@@ -21,7 +21,7 @@ namespace RazeUI.UISprites
             int bottom = all.Region.Size.Y - (centerStart.Y + centerSize.Y);
 
             UISprite topLeft = new UISprite(tex, new Rectangle(stp, centerStart));
-            UISprite topRight = new UISprite(tex, new Rectangle(stp - new Point(right, 0), new Point(right, top)));
+            UISprite topRight = new UISprite(tex, new Rectangle(stp + new Point(centerStart.X + centerSize.X, 0), new Point(right, top)));
             UISprite bottomLeft = new UISprite(tex, new Rectangle(new Point(stp.X, stp.Y + centerStart.Y + centerSize.Y), new Point(left, bottom)));
             UISprite bottomRight = new UISprite(tex, new Rectangle(new Point(stp.X + centerStart.X + centerSize.X, stp.Y + centerStart.Y + centerSize.Y), new Point(right, bottom)));
 
@@ -74,7 +74,7 @@ namespace RazeUI.UISprites
             if (innerWidth < 0)
                 innerWidth = 0;
 
-            int minHeight = TopLeft.Region.Height + TopRight.Region.Height;
+            int minHeight = TopLeft.Region.Height + BottomLeft.Region.Height;
             int innerHeight = pSize.Y - minHeight;
             if (innerHeight < 0)
                 innerHeight = 0;
@@ -82,12 +82,12 @@ namespace RazeUI.UISprites
             // Top left.
             TopLeft.Draw(spr, pos, color);
 
-            // Top center.
+            //// Top center.
             if(innerWidth != 0)
                 TopCenter.Draw(spr, new Rectangle(pos + new Point(TopLeft.Region.Width, 0), new Point(innerWidth, TopCenter.Region.Height)), color);
 
-            // Top right.
-            TopRight.Draw(spr, pos + new Point(TopLeft.Region.Width, 0), color);
+            //// Top right.
+            TopRight.Draw(spr, pos + new Point(TopLeft.Region.Width + innerWidth, 0), color);
 
             // Center left.
             if(innerHeight != 0)

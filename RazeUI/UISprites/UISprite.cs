@@ -8,6 +8,11 @@ namespace RazeUI.UISprites
         public Texture2D Texture { get; set; }
         public Rectangle Region { get; set; }
 
+        public UISprite(Texture2D texture) : this(texture, Rectangle.Empty)
+        {
+
+        }
+
         public UISprite(Texture2D texture, Rectangle region)
         {
             this.Texture = texture;

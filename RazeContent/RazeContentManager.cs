@@ -2,6 +2,7 @@
 using RazeContent.Loaders;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace RazeContent
@@ -24,6 +25,7 @@ namespace RazeContent
                 return cache?.Count ?? 0;
             }
         }
+        public bool AllowAbsolutePaths { get; set; } = false;
 
         private Dictionary<string, object> cache = new Dictionary<string, object>();
         private Dictionary<Type, ContentLoader> loaders = new Dictionary<Type, ContentLoader>();
@@ -123,9 +125,15 @@ namespace RazeContent
             if (path == null)
                 throw new ArgumentNullException(nameof(path));
 
-            FileInfo f = new FileInfo(path);
-            if (f.Exists)
-                return f.FullName;
+            if (AllowAbsolutePaths)
+            {
+                FileInfo f = new FileInfo(path);
+                if (f.Exists)
+                    return f.FullName;
+            }
+
+            // Normalize back and forward slashes, necessary for string comparison further down.
+            path = path.Replace('/', '\\');
 
             var tempToCheck = new FileSystemItem();
             for (int i = 0; i < sourceFolderCount; i++)
@@ -233,7 +241,10 @@ namespace RazeContent
                 throw new Exception($"Failed to load content <{typeof(T).Name}> from {absolutePath}:\n{error}");
             }
 
+            Stopwatch s = new Stopwatch();
+            s.Start();
             object obj = loader.Load(absolutePath);
+            s.Stop();
 
             if (obj == null)
                 return null; // Should an exception be thrown here?
@@ -252,6 +263,8 @@ namespace RazeContent
                 // Loaded type did not match the requested type!
                 throw new ArgumentException($"The loaded type, {obj.GetType().FullName} cannot be converted to requested type {typeof(T).FullName}!", nameof(T));
             }
+
+            Console.WriteLine($"Loaded '{path}' in {s.Elapsed.TotalMilliseconds:F1} ms.");
 
             return converted;
         }

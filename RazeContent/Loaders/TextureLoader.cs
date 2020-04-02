@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.IO;
 
@@ -20,6 +21,19 @@ namespace RazeContent.Loaders
             using FileStream fs = new FileStream(path, FileMode.Open);
 
             Texture2D loaded = Texture2D.FromStream(gd, fs);
+
+            // Need to premultiply color.
+            Color[] data = new Color[loaded.Width * loaded.Height];
+            loaded.GetData(data);
+            for (int i = 0; i < data.Length; i++)
+            {
+                var cIn = data[i];
+                var cOut = Color.FromNonPremultiplied(cIn.ToVector4());
+
+                data[i] = cOut;
+            }
+
+            loaded.SetData(data);
 
             return loaded;
         }

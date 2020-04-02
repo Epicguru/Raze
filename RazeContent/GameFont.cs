@@ -11,9 +11,9 @@ namespace RazeContent
     {
         /// <summary>
         /// Gets or sets the font size.
-        /// The setter is equivalent to calling <see cref="SetSize(float)"/>.
+        /// The setter is equivalent to calling <see cref="SetSize(int)"/>.
         /// </summary>
-        public float Size
+        public int Size
         {
             get
             {
@@ -21,7 +21,41 @@ namespace RazeContent
             }
             set
             {
-                SetSize(value);
+                const int MIN_SIZE = 1;
+                SetSize(value >= MIN_SIZE ? value : MIN_SIZE);
+            }
+        }
+
+        /// <summary>
+        /// Should this font use kerning data? It looks better :) You really should. Don't be like Monogame.
+        /// </summary>
+        public bool UseKerning
+        {
+            get
+            {
+                return font?.UseKernings ?? false;
+            }
+            set
+            {
+                if (font != null)
+                    font.UseKernings = value;
+            }
+        }
+
+        /// <summary>
+        /// The default character code to use when a character is not available in this font.
+        /// If null, and a character is unable to be rendered or measured, an exception will be thrown.
+        /// </summary>
+        public int? DefaultCharacterCode
+        {
+            get
+            {
+                return font?.DefaultCharacter;
+            }
+            set
+            {
+                if (font != null)
+                    font.DefaultCharacter = value;
             }
         }
 
@@ -81,7 +115,7 @@ namespace RazeContent
         /// which is very slow so should be avoided unless it's for a very good reason.
         /// </summary>
         /// <param name="size">The font size, in pixels.</param>
-        public void SetSize(float size)
+        public void SetSize(int size)
         {
             if (font != null && font.Size != size)
             {
@@ -94,11 +128,10 @@ namespace RazeContent
         /// <summary>
         /// Adds a ttf file's data to this font, allowing multiple font files to be merged into one renderable font.
         /// </summary>
-        /// <param name="name">The name of the new font file.</param>
         /// <param name="data">The ttf file data. Could be loaded using <c>File.ReadAllBytes(path);</c> for example.</param>
-        public void AddTtf(string name, byte[] data)
+        public void AddTtf(byte[] data)
         {
-            font.AddTtf(name, data);
+            font.AddTtf(data);
         }
 
         public IEnumerable<Texture2D> EnumerateTextureAtlases()
@@ -118,6 +151,11 @@ namespace RazeContent
             drawOffset.Y = -drawOffset.Y;
         }
 
+        public void Clean()
+        {
+            font.Reset();
+        }
+
         public void Dispose()
         {
             font?.Reset();
@@ -135,7 +173,7 @@ namespace RazeContent
             if (gf == null)
                 throw new ArgumentNullException(nameof(gf));
 
-            spr.DrawString(gf.font, text, position, color, Vector2.One * scale);
+            spr.DrawString(gf.font, text, position + gf.drawOffset.ToVector2(), color, Vector2.One * scale);
         }
     }
 }

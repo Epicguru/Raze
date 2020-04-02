@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29924.181
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raze", "Raze\Raze.csproj", "{AC34F4FB-ECD3-493A-AD27-2612E6DB4145}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Raze", "Raze\Raze.csproj", "{AC34F4FB-ECD3-493A-AD27-2612E6DB4145}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazeUI", "RazeUI\RazeUI.csproj", "{E7B38E41-DE1C-4449-8338-D97A4EB220E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RazeUI", "RazeUI\RazeUI.csproj", "{E7B38E41-DE1C-4449-8338-D97A4EB220E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RazeContent", "RazeContent\RazeContent.csproj", "{12EE34C1-FB21-42D4-9958-A019EAFA62CE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RazeContent", "RazeContent\RazeContent.csproj", "{12EE34C1-FB21-42D4-9958-A019EAFA62CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
