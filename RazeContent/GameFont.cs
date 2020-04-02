@@ -1,7 +1,9 @@
-﻿using SpriteFontPlus;
-using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteFontPlus;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RazeContent
 {
@@ -15,7 +17,7 @@ namespace RazeContent
         {
             get
             {
-                return font.Size;
+                return font?.Size ?? 0;
             }
             set
             {
@@ -23,12 +25,42 @@ namespace RazeContent
             }
         }
 
+        /// <summary>
+        /// The additional spacing between characters to use when drawing.
+        /// Normally defaults to zero, but can be changed to squash characters closer together or move
+        /// them further apart.
+        /// </summary>
+        public float Spacing
+        {
+            get
+            {
+                return font?.Spacing ?? 0f;
+            }
+            set
+            {
+                if (font != null)
+                    font.Spacing = value;
+            }
+        }
+
+        /// <summary>
+        /// The multiplier to use for vertical separation when drawing multiple lines of text. Defaults to 1,
+        /// but must be adjusted manually (for now) for each font to achieve the desired look.
+        /// </summary>
+        public float VerticalSpacingMultiplier { get; set; } = 1f;
+
+        /// <summary>
+        /// Gets the number of textures that the font has in memory at the moment.
+        /// </summary>
+        public int TextureAtlasCount { get { return font?.Textures.Count() ?? 0; } }
+
         internal DynamicSpriteFont font;
         internal Point drawOffset; // The offset required to get the top-left corner actually drawing where you want it to.
 
-        internal GameFont()
+        internal GameFont(DynamicSpriteFont font)
         {
-
+            this.font = font;
+            UpdateOffset();
         }
 
         /// <summary>
@@ -36,17 +68,12 @@ namespace RazeContent
         /// </summary>
         /// <param name="text">The single line of text to measure.</param>
         /// <returns>The size, in pixels, that the font occupies.</returns>
-        public Vector2 MeasureString(string text)
+        public Point MeasureString(string text)
         {
-            return font.MeasureString(text);
-        }
+            if (text == null)
+                return Point.Zero;
 
-        public Rectangle GetBounds(Vector2 pos, string text)
-        {
-            var rect = font.GetTextBounds(pos, text);
-            rect.X += drawOffset.X;
-            rect.Y += drawOffset.Y;
-            return rect;
+            return font.GetTextBounds(Vector2.Zero, text).Size;
         }
 
         /// <summary>
@@ -56,15 +83,39 @@ namespace RazeContent
         /// <param name="size">The font size, in pixels.</param>
         public void SetSize(float size)
         {
-            if (font.Size != size)
+            if (font != null && font.Size != size)
             {
                 font.Size = size;
 
-                var bounds = font.GetTextBounds(Vector2.Zero, "Example");
-                drawOffset = bounds.Location;
-                drawOffset.X = -drawOffset.X;
-                drawOffset.Y = -drawOffset.Y;
+                UpdateOffset();
             }
+        }
+
+        /// <summary>
+        /// Adds a ttf file's data to this font, allowing multiple font files to be merged into one renderable font.
+        /// </summary>
+        /// <param name="name">The name of the new font file.</param>
+        /// <param name="data">The ttf file data. Could be loaded using <c>File.ReadAllBytes(path);</c> for example.</param>
+        public void AddTtf(string name, byte[] data)
+        {
+            font.AddTtf(name, data);
+        }
+
+        public IEnumerable<Texture2D> EnumerateTextureAtlases()
+        {
+            foreach (var tex in font.Textures)
+            {
+                if (tex != null && !tex.IsDisposed)
+                    yield return tex;
+            }
+        }
+
+        private void UpdateOffset()
+        {
+            var bounds = font.GetTextBounds(Vector2.Zero, "TILAWlweyYgG");
+            drawOffset = bounds.Location;
+            drawOffset.X = -drawOffset.X;
+            drawOffset.Y = -drawOffset.Y;
         }
 
         public void Dispose()
@@ -79,14 +130,12 @@ namespace RazeContent
     /// </summary>
     public static class GFE
     {
-        public static void DrawString(this SpriteBatch spr, GameFont gf, string text, Vector2 position, Color color)
+        public static void DrawString(this SpriteBatch spr, GameFont gf, string text, Vector2 position, Color color, float scale = 1f)
         {
             if (gf == null)
                 throw new ArgumentNullException(nameof(gf));
 
-            // URGTODO adjust location based on bounds offset.
-
-            spr.DrawString(gf.font, text, position + gf.drawOffset, color);
+            spr.DrawString(gf.font, text, position, color, Vector2.One * scale);
         }
     }
 }
