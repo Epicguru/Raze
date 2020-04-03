@@ -88,6 +88,8 @@ namespace RazeContent
         /// </summary>
         public int TextureAtlasCount { get { return font?.Textures.Count() ?? 0; } }
 
+        public bool HighAccuracyPositioning { get; set; } = false;
+
         internal DynamicSpriteFont font;
         internal Point drawOffset; // The offset required to get the top-left corner actually drawing where you want it to.
 
@@ -145,7 +147,7 @@ namespace RazeContent
 
         private void UpdateOffset()
         {
-            var bounds = font.GetTextBounds(Vector2.Zero, "TILAWlweyYgG");
+            var bounds = font.GetTextBounds(Vector2.Zero, "ELlgSomeText"); // I really need a better string for this, something more scientific.
             drawOffset = bounds.Location;
             drawOffset.X = -drawOffset.X;
             drawOffset.Y = -drawOffset.Y;
@@ -173,7 +175,13 @@ namespace RazeContent
             if (gf == null)
                 throw new ArgumentNullException(nameof(gf));
 
-            spr.DrawString(gf.font, text, position + gf.drawOffset.ToVector2(), color, Vector2.One * scale);
+            Vector2 offset = gf.drawOffset.ToVector2();
+            if (gf.HighAccuracyPositioning)
+            {
+                offset = -gf.font.GetTextBounds(Vector2.Zero, text).Location.ToVector2();
+            }
+
+            spr.DrawString(gf.font, text, position + offset, color, Vector2.One * scale);
         }
     }
 }

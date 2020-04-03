@@ -56,26 +56,26 @@ namespace RazeUI.UISprites
             this.BottomRight = bottomRight;
         }
 
-        public void Draw(SpriteBatch spr, Vector2 position, Vector2 size, Color color)
+        public void Draw(SpriteBatch spr, Rectangle bounds, Color color)
         {
             if (spr == null)
                 throw new ArgumentNullException(nameof(spr));
 
-            Point pos = new Point((int) position.X, (int) position.Y);
-            Point pSize = new Point((int) size.X, (int) size.Y);
+            Point pos = bounds.Location;
+            Point size = bounds.Size;
 
-            if (pSize.X < 0)
-                pSize.X = 0;
-            if (pSize.Y < 0)
-                pSize.Y = 0;
+            if (size.X < 0)
+                size.X = 0;
+            if (size.Y < 0)
+                size.Y = 0;
 
             int minWidth = TopLeft.Region.Width + TopRight.Region.Width;
-            int innerWidth = pSize.X - minWidth;
+            int innerWidth = size.X - minWidth;
             if (innerWidth < 0)
                 innerWidth = 0;
 
             int minHeight = TopLeft.Region.Height + BottomLeft.Region.Height;
-            int innerHeight = pSize.Y - minHeight;
+            int innerHeight = size.Y - minHeight;
             if (innerHeight < 0)
                 innerHeight = 0;
 
