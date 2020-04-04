@@ -1,11 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using RazeContent;
 
 namespace RazeUI
 {
     public class LayoutUserInterface : IDisposable
     {
+        public event Action<LayoutUserInterface> DrawUI;
+
         public UserInterface UI { get; private set; }
         public Anchor Anchor { get; set; }
 
@@ -65,20 +68,41 @@ namespace RazeUI
         public LayoutUserInterface(UserInterface ui)
         {
             UI = ui;
+            ui.soloRender = false;
         }
 
-        /// <summary>
-        /// Should be called at the beginning of each frame, before UI is drawn. Resets state and
-        /// prepares for UI to be drawn.
-        /// </summary>
-        public void BeginDraw()
+        public void Draw()
         {
+            if(UI.GraphicsDevice.PresentationParameters.RenderTargetUsage != Microsoft.Xna.Framework.Graphics.RenderTargetUsage.PreserveContents)
+            {
+                throw new Exception("In order to render UI, GraphicsDevice.PresentationParameters.RenderTargetUsage must be RenderTargetUsage.PreserveContents.");
+            }
+
             FontSize = DefaultFontSize;
 
             Rectangle screenBounds = new Rectangle(0, 0, UI.ScreenProvider.GetWidth(), UI.ScreenProvider.GetHeight());
             MarginData margins = new MarginData(10, 10, 10, 10);
             contexts.Clear();
             NewContext(screenBounds, margins, Anchor.Vertical, false);
+
+            // Start render.
+            UI.UpdateRenderTarget();
+            UI.GraphicsDevice.SetRenderTarget(UI.rt);
+            UI.GraphicsDevice.Clear(Color.Transparent);
+
+            // Draw self.
+            UI.SpriteBatch.Begin();
+            DrawUI?.Invoke(this);
+            UI.SpriteBatch.End();
+
+            // Draw base UI, in case someone is using basic UI mode.
+            UI.Draw();
+
+            // End frame.
+            UI.FinishDraw();
+
+            // Clear typed keys in base.
+            UI.typedKeys.Clear();
         }
 
         private Point GetDrawPos(Point size)
@@ -214,6 +238,8 @@ namespace RazeUI
             return new Rectangle(bounds.Location + new Point(margins.Left, margins.Top), bounds.Size - new Point(margins.Left + margins.Right, margins.Top + margins.Bottom));
         }
 
+        #region Buttons
+
         /// <summary>
         /// Places a new button in the current context, with a text label. The size of the label depends on the font size and the text length.
         /// Returns true when left clicked.
@@ -258,6 +284,10 @@ namespace RazeUI
             AdvanceContext(bounds);
         }
 
+        #endregion
+
+        #region Panels
+
         /// <summary>
         /// Places a new panel and switches context to it. The panel is placed within the current context.
         /// </summary>
@@ -294,6 +324,140 @@ namespace RazeUI
 
             NewContext(bounds, new MarginData(10, 10, 10, 10), Anchor.Vertical, true);
         }
+
+        #endregion
+
+        #region Checkboxes
+
+        /// <summary>
+        /// Draws a checkbox, also know as a toggle.
+        /// A checkbox can be either checked or unchecked, and by clicking on it the user changes the checked state.
+        /// The checked state much be stored by the calling code via the <c>isChecked</c> ref parameter.
+        /// </summary>
+        /// <param name="label">The text to draw next to the toggle box. Can be null or blank to just draw the box.</param>
+        /// <param name="isChecked">Stores and controls the checked state of this toggle.</param>
+        /// <returns>True of the frame that the user changes the checked state by clicking on this toggle.</returns>
+        public bool Checkbox(string label, ref bool isChecked)
+        {
+            // Ignores expand width, because it doesn't make any sense here.
+            Point labelSize = string.IsNullOrWhiteSpace(label) ? Point.Zero : UI.Font.MeasureString(label);
+            int sep = UI.ApplyScale(10);
+            Point boxSize = UI.ApplyScale(new Point(32, 32));
+
+            Point totalSize = new Point(boxSize.X + sep + labelSize.X, labelSize.Y);
+            Point pos = GetDrawPos(totalSize);
+            Point labelPos = pos + new Point(boxSize.X + sep, boxSize.Y / 2 - labelSize.Y / 2);
+
+            Rectangle labelBounds = new Rectangle(labelPos, labelSize);
+            bool mouseOver = UI.IsMouseOver(labelBounds);
+            if (mouseOver && UI.MouseProvider.IsLeftMouseClick())
+                isChecked = !isChecked;
+
+            Rectangle bounds = new Rectangle(pos, totalSize);
+
+            bool toReturn = UI.Checkbox(pos, boxSize.X, ref isChecked, out Rectangle _, mouseOver);
+
+            if(!string.IsNullOrWhiteSpace(label))
+                UI.SpriteBatch.DrawString(UI.Font, label, labelPos.ToVector2(), Color.White);
+
+            AdvanceContext(bounds);
+
+            return toReturn;
+        }
+
+        #endregion
+
+        #region Separators
+
+        public void FlatSeparator(int? width, int spaceBefore = 5, int spaceAfter = 5)
+        {
+            bool changedAnchor = false;
+            Anchor oldAnchor = default;
+            if (Anchor != Anchor.Vertical)
+            {
+                // TODO issue warning here.
+                oldAnchor = Anchor;
+                Anchor = Anchor.Vertical;
+                changedAnchor = true;
+            }
+
+            if (width != null)
+                width = UI.ApplyScale(width.Value);
+
+            int boundsWidth = GetContextInnerBounds().Width;
+            int realWidth = width ?? boundsWidth;
+            Point drawPos = GetDrawPos(new Point(realWidth, 0));
+            if (width != null)
+            {
+                drawPos.X += (boundsWidth - width.Value) / 2;
+            }
+
+            UI.FlatSeparator(drawPos, realWidth, Color.White, out Rectangle bounds, spaceBefore, spaceAfter);
+
+            AdvanceContext(bounds);
+
+            if (changedAnchor)
+            {
+                Anchor = oldAnchor;
+            }
+        }
+
+
+        public void FlatSeparator(int? width, Color color, int spaceBefore = 5, int spaceAfter = 5)
+        {
+            bool changedAnchor = false;
+            Anchor oldAnchor = default;
+            if(Anchor != Anchor.Vertical)
+            {
+                // TODO issue warning here.
+                oldAnchor = Anchor;
+                Anchor = Anchor.Vertical;
+                changedAnchor = true;
+            }
+
+            if (width != null)
+                width = UI.ApplyScale(width.Value);
+
+            int boundsWidth = GetContextInnerBounds().Width;
+            int realWidth = width ?? boundsWidth;
+            Point drawPos = GetDrawPos(new Point(realWidth, 0));
+            if (width != null)
+            {
+                drawPos.X += (boundsWidth - width.Value) / 2;
+            }
+
+            UI.FlatSeparator(drawPos, realWidth, color, out Rectangle bounds, spaceBefore, spaceAfter);
+
+            AdvanceContext(bounds);
+
+            if (changedAnchor)
+            {
+                Anchor = oldAnchor;
+            }
+        }
+
+        #endregion
+
+        #region Labels
+
+        public void Label(string text)
+        {
+            this.Label(text, Color.White);
+        }
+
+        public void Label(string text, Color color)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            Point size = UI.Font.MeasureString(text);
+            Point pos = GetDrawPos(size);
+            UI.Label(pos, text, color, out Rectangle bounds);
+
+            AdvanceContext(bounds);
+        }
+
+        #endregion
 
         public void Dispose()
         {
