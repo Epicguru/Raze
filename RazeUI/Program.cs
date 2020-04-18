@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using RazeContent;
 using RazeUI.Handles;
 using RazeUI.Providers;
+using RazeUI.Providers.Implementations;
 using RazeUI.UISprites;
 using System;
 using System.Diagnostics;
@@ -24,7 +25,6 @@ namespace RazeUI
         private SpriteBatch spr;
         private RazeContentManager content;
         private LayoutUserInterface uiRef;
-        private KeyboardProvider keyboardProvider;
 
         private Program()
         {
@@ -33,12 +33,6 @@ namespace RazeUI
 
             Window.AllowUserResizing = true;
             IsMouseVisible = true;
-
-            keyboardProvider = new KeyboardProvider();
-
-            Window.TextInput += keyboardProvider.OnTextInput;
-            Window.KeyDown += keyboardProvider.OnKeyDownFromWindow;
-            Window.KeyUp += keyboardProvider.OnKeyUpFromWindow;
         }
 
         protected override void Initialize()
@@ -60,25 +54,17 @@ namespace RazeUI
             string path = Path.Combine(new FileInfo(Process.GetCurrentProcess().MainModule.FileName).DirectoryName, "Content");
             content = new RazeContentManager(Graphics.GraphicsDevice, path);
 
-            uiRef = new LayoutUserInterface(new UserInterface(Graphics.GraphicsDevice, new MouseProvider(), keyboardProvider, new ScreenProvider(), new ContentProvider(){Content = content}));
+            uiRef = new LayoutUserInterface(new UserInterface(Graphics.GraphicsDevice, new MonoGameMouseProvider(), new MonoGameKeyboardProvider(Window), new MonoGameScreenProvider(GraphicsDevice), new RazeContentProvider(content)));
             uiRef.DrawUI += DrawUI;
         }
 
         private TextBoxHandle text = new TextBoxHandle();
-        private TextBoxHandle text2 = new TextBoxHandle();
         private void DrawUI(LayoutUserInterface ui)
         {
             if (Keyboard.GetState().IsKeyDown(Keys.Up))
                 ui.Scale += 0.01f;
             if (Keyboard.GetState().IsKeyDown(Keys.Down))
                 ui.Scale -= 0.01f;
-
-            //text.HintText = "Type something...";
-            //ui.UI.TextBoxMasked(new Rectangle(20, 20, 250, 40), text);
-
-            //text2.HintText = "Type something...";
-            //text2.AllowMultiLine = true;
-            //ui.UI.TextBoxMasked(new Rectangle(20, 60, 450, 120), text2);
 
             ui.Button("Play");
 
@@ -145,9 +131,6 @@ namespace RazeUI
             Graphics.GraphicsDevice.SetRenderTarget(null);
             Graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // Update mouse input, clunky way to do it.
-            (uiRef.UI.MouseProvider as MouseProvider).Update();
-
             spr.Begin();
             spr.Draw(pixel, Vector2.One * 200f, Color.White);
             spr.End();
@@ -156,92 +139,6 @@ namespace RazeUI
             uiRef.Draw();
 
             base.Draw(gameTime);
-        }
-
-        private class ContentProvider : IContentProvider
-        {
-            public RazeContentManager Content;
-
-            public UISprite LoadSprite(string localPath)
-            {
-                return new UISprite(Content.Load<Texture2D>(localPath));
-            }
-
-            public GameFont LoadFont(string localPath)
-            {
-                return Content.Load<GameFont>(localPath);
-            }
-        }
-
-        private class MouseProvider : IMouseProvider
-        {
-            private MouseState state, lastState;
-
-            public void Update()
-            {
-                lastState = state;
-                state = Mouse.GetState();
-            }
-
-            public Point GetMousePos()
-            {
-                return state.Position;
-            }
-
-            public bool IsLeftMouseDown()
-            {
-                return state.LeftButton == ButtonState.Pressed;
-            }
-
-            public bool IsRightMouseDown()
-            {
-                return state.RightButton == ButtonState.Pressed;
-            }
-
-            public bool IsLeftMouseClick()
-            {
-                return IsLeftMouseDown() && lastState.LeftButton != ButtonState.Pressed;
-            }
-
-            public bool IsRightMouseClick()
-            {
-                return IsRightMouseDown() && lastState.RightButton != ButtonState.Pressed;
-            }
-        }
-
-        private class ScreenProvider : IScreenProvider
-        {
-            public int GetWidth()
-            {
-                return Graphics.GraphicsDevice.PresentationParameters.BackBufferWidth;
-            }
-
-            public int GetHeight()
-            {
-                return Graphics.GraphicsDevice.PresentationParameters.BackBufferHeight;
-            }
-        }
-
-        private class KeyboardProvider : IKeyboardProvider
-        {
-            public void OnTextInput(object _, TextInputEventArgs e)
-            {
-                OnKeyTyped?.Invoke(e.Key, e.Character);
-            }
-
-            public void OnKeyDownFromWindow(object _, InputKeyEventArgs e)
-            {
-                OnKeyDown?.Invoke(e.Key);
-            }
-
-            public void OnKeyUpFromWindow(object _, InputKeyEventArgs e)
-            {
-                OnKeyUp?.Invoke(e.Key);
-            }
-
-            public event KeyboardEvent OnKeyTyped;
-            public event Action<Keys> OnKeyDown;
-            public event Action<Keys> OnKeyUp;
         }
     }
 }

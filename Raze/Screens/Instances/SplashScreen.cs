@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Raze.Sprites;
+using RazeUI;
 
 namespace Raze.Screens.Instances
 {
@@ -27,7 +28,7 @@ namespace Raze.Screens.Instances
             }
         }
 
-        public override void DrawUI(SpriteBatch sb)
+        public override void DrawUI(SpriteBatch sb, LayoutUserInterface ui)
         {
             if(Main.LoadingIconSprite != null)
             {

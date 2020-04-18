@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using RazeUI;
 
 namespace Raze.Screens
 {
@@ -22,7 +23,7 @@ namespace Raze.Screens
 
         public virtual void Update() { }
         public virtual void Draw(SpriteBatch sb) { }
-        public virtual void DrawUI(SpriteBatch sb) { }
+        public virtual void DrawUI(SpriteBatch sb, LayoutUserInterface ui) { }
 
         public override string ToString()
         {

@@ -14,6 +14,7 @@ namespace RazeUI
     {
         public SpriteBatch SpriteBatch { get; set; }
         public GraphicsDevice GraphicsDevice { get; set; }
+        public Color GlobalTint { get; set; } = Color.White;
         public IMouseProvider MouseProvider { get; set; }
         public IKeyboardProvider KeyboardProvider
         {
@@ -40,7 +41,6 @@ namespace RazeUI
                 }
             }
         }
-    
         public IScreenProvider ScreenProvider { get; set; }
         public IContentProvider ContentProvider { get; set; }
 
@@ -72,7 +72,7 @@ namespace RazeUI
             this.ScreenProvider = screenProvider;
             this.ContentProvider = contentProvider;
 
-            pixel = new Texture2D(Program.Graphics.GraphicsDevice, 1, 1);
+            pixel = new Texture2D(gd, 1, 1);
             pixel.SetData(new Color[] { Color.White });
 
             LoadContent();
@@ -140,6 +140,7 @@ namespace RazeUI
         {
             if (soloRender)
             {
+                MouseProvider?.PreDraw();
                 UpdateRenderTarget();
                 GraphicsDevice.SetRenderTarget(this.rt);
                 GraphicsDevice.Clear(Color.Transparent);
@@ -159,7 +160,7 @@ namespace RazeUI
         {
             GraphicsDevice.SetRenderTarget(null);
             SpriteBatch.Begin();
-            SpriteBatch.Draw(rt, Vector2.Zero, Color.White);
+            SpriteBatch.Draw(rt, Vector2.Zero, GlobalTint);
             SpriteBatch.End();
         }
 

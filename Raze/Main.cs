@@ -10,6 +10,8 @@ using Raze.Screens.Instances;
 using Raze.Sprites;
 using Raze.World;
 using RazeContent;
+using RazeUI;
+using RazeUI.Providers.Implementations;
 
 // Allow GVS Tests to access 'internal' methods, fields etc.
 [assembly: InternalsVisibleTo("GVS_Tests")]
@@ -19,13 +21,13 @@ namespace Raze
     public class Main : Game
     {
         public static RazeContentManager ContentManager { get; private set; }
-        public static GraphicsDeviceManager Graphics;
-        public static GraphicsDevice GlobalGraphicsDevice;
-        public static GameWindow GameWindow;
-        public static SpriteBatch SpriteBatch;
-        public static Camera Camera;
-        public static GameFont MediumFont;
-        public static Sprite MissingTextureSprite;
+        public static SpriteBatch SpriteBatch { get; private set; }
+        public static GraphicsDeviceManager Graphics { get; private set; }
+        public static GraphicsDevice GlobalGraphicsDevice { get; private set; }
+        public static GameWindow GameWindow { get; private set; }
+        public static Camera Camera { get; private set; }
+        public static GameFont MediumFont { get; private set; }
+        public static Sprite MissingTextureSprite { get; private set; }
 
         // TODO fix this, need a better way for each tile to load content before packing atlas.
         public static Sprite GrassTile, MountainTile, TreeTile, StoneTile, StoneTopTile;
@@ -34,6 +36,7 @@ namespace Raze
 
         public static AnimatedSprite LoadingIconSprite { get; private set; }
 
+        public static LayoutUserInterface LayoutUI { get; private set; }
         public static ScreenManager ScreenManager { get; private set; }
         public static TileAtlas SpriteAtlas { get; private set; }
         public static IsoMap Map { get; internal set; }
@@ -85,6 +88,17 @@ namespace Raze
 
             // Create content manager.
             ContentManager = new RazeContentManager(this.GraphicsDevice, ContentDirectory);
+
+            // Create the UI layout object.
+            LayoutUI = new LayoutUserInterface(new UserInterface(GraphicsDevice,
+                                               new MonoGameMouseProvider(),
+                                               new MonoGameKeyboardProvider(Window),
+                                               new MonoGameScreenProvider(GraphicsDevice),
+                                               new RazeContentProvider(ContentManager)));
+            LayoutUI.DrawUI += (ui) =>
+            {
+                ScreenManager.DrawUI(SpriteBatch, ui);
+            };
 
             // Create screen manager.
             ScreenManager = new ScreenManager();
@@ -149,11 +163,13 @@ namespace Raze
 
         protected override void EndRun()
         {
+            ContentManager.Dispose();
             ScreenManager.Shutdown();
             Debug.Shutdown();
             thisProcess.Dispose();
             thisProcess = null;
             Instance = null;
+            LayoutUI.Dispose();
             base.EndRun();
         }
 
@@ -195,7 +211,7 @@ namespace Raze
 
         internal static void MainDrawUI()
         {
-            ScreenManager.DrawUI(SpriteBatch);
+            LayoutUI.Draw();
         }
     }
 }

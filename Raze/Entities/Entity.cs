@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Raze.Sprites;
 using Raze.World;
+using RazeUI;
 
 namespace Raze.Entities
 {
@@ -98,7 +99,7 @@ namespace Raze.Entities
             }
         }
 
-        internal static void DrawAllUI(SpriteBatch spr)
+        internal static void DrawAllUI(SpriteBatch spr, LayoutUserInterface ui)
         {
             foreach (var entity in activeEntities)
             {
@@ -106,7 +107,7 @@ namespace Raze.Entities
                     continue;
 
                 // TODO catch exceptions and handle.
-                entity.DrawUI(spr);
+                entity.DrawUI(spr, ui);
             }
         }
 
@@ -212,7 +213,7 @@ namespace Raze.Entities
         /// since the draw order of this is basically random.
         /// </summary>
         /// <param name="sb">The SpriteBatch to draw with. Positions and sizes will be in screen-space.</param>
-        protected virtual void DrawUI(SpriteBatch sb)
+        protected virtual void DrawUI(SpriteBatch sb, LayoutUserInterface ui)
         {
 
         }

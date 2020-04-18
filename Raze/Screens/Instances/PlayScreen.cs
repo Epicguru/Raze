@@ -11,6 +11,7 @@ using Raze.World;
 using Raze.World.Generation;
 using Raze.World.Tiles;
 using Raze.World.Tiles.Components;
+using RazeUI;
 
 namespace Raze.Screens.Instances
 {
@@ -253,9 +254,9 @@ namespace Raze.Screens.Instances
             Entity.DrawAll(sb);
         }
 
-        public override void DrawUI(SpriteBatch sb)
+        public override void DrawUI(SpriteBatch sb, LayoutUserInterface ui)
         {
-            Entity.DrawAllUI(sb);
+            Entity.DrawAllUI(sb, ui);
         }
 
         private static void UpdateCameraMove()

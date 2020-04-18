@@ -10,8 +10,6 @@ namespace Raze
     {
         /// <summary>
         /// The current update and draw frequency, calculated once per second.
-        /// The framerate is affected by <see cref="TargetFramerate"/> and <see cref="VSync"/> and of course
-        /// the actual speed of game updating and rendering.
         /// </summary>
         public static float Framerate { get; private set; }
 
@@ -69,6 +67,10 @@ namespace Raze
 
         public static void Start()
         {
+            VSync = true;
+            Main.Graphics.SynchronizeWithVerticalRetrace = VSync;
+            Main.Graphics.ApplyChanges();
+
             fpsTimer.Start();
             Framerate = 0;
         }
@@ -113,9 +115,10 @@ namespace Raze
 
         internal static void Draw(SpriteBatch spr)
         {
-            tempTimer.Restart();
             Main.Camera.UpdateMatrix(Main.GlobalGraphicsDevice);
             Main.GlobalGraphicsDevice.Clear(ClearColor);
+
+            tempTimer.Restart();
 
             SamplerState s = Main.Camera.Zoom >= 1 ? SamplerState.PointClamp : SamplerState.LinearClamp;
             spr.Begin(SpriteSortMode.FrontToBack, BlendState.AlphaBlend, s, null, null, null, Main.Camera.GetMatrix());
@@ -134,8 +137,8 @@ namespace Raze
 
             InUIDraw = true;
 
-            tempTimer.Restart();
 
+            tempTimer.Restart();
             spr.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, null);
 
             // Draw the UI.
@@ -143,26 +146,22 @@ namespace Raze
             Debug.DrawUI(spr);
 
             spr.End();
-
-            InUIDraw = false;
-
             tempTimer.Stop();
             thisFrameStats.DrawUITime = tempTimer.Elapsed.TotalSeconds;
+
+            InUIDraw = false;
         }
 
         internal static void Present()
         {
             tempTimer.Restart();
-
             Main.GlobalGraphicsDevice.Present();
-
             tempTimer.Stop();
-
             thisFrameStats.PresentTime = tempTimer.Elapsed.TotalSeconds;
 
             totalTimer.Stop();
             thisFrameStats.TotalTime = totalTimer.Elapsed.TotalSeconds; // TODO fix this so that the debug drawer doesn't mix info from two frames
-            Debug.Log($"{thisFrameStats}");
+            //Debug.Log($"{thisFrameStats}");
 
             thisFrameStats.DrawMetrics = Main.GlobalGraphicsDevice.Metrics;
 

@@ -5,6 +5,10 @@ namespace RazeUI.Providers
 {
     public interface IMouseProvider
     {
+        public virtual void PreDraw()
+        {
+
+        }
         public Point GetMousePos();
         public bool IsLeftMouseDown();
         public bool IsRightMouseDown();

@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Raze.Sprites;
 using RazeContent;
+using RazeUI;
 
 namespace Raze.Screens
 {
@@ -262,12 +263,12 @@ namespace Raze.Screens
             CurrentScreen?.Draw(spr);
         }
 
-        public void DrawUI(SpriteBatch spr)
+        public void DrawUI(SpriteBatch spr, LayoutUserInterface ui)
         {
-            CurrentScreen?.DrawUI(spr);
+            CurrentScreen?.DrawUI(spr, ui);
 
             // Draw fade thing.
-            spr.Draw(Debug.Pixel, new Rectangle(0, 0, Screen.Width, Screen.Height), new Color(0, 0, 0, fadeLerp));
+            ui.UI.GlobalTint = new Color(0, 0, 0, fadeLerp);
         }
 
         public void DrawUIBackupThread(SpriteBatch spr, float dt)

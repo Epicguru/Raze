@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework.Graphics;
 using RazeContent;
 using RazeUI.Handles;
 
@@ -81,9 +82,10 @@ namespace RazeUI
 
         public void Draw()
         {
-            if(UI.GraphicsDevice.PresentationParameters.RenderTargetUsage != Microsoft.Xna.Framework.Graphics.RenderTargetUsage.PreserveContents)
+            if(UI.GraphicsDevice.PresentationParameters.RenderTargetUsage != RenderTargetUsage.PreserveContents)
             {
-                throw new Exception("In order to render UI, GraphicsDevice.PresentationParameters.RenderTargetUsage must be RenderTargetUsage.PreserveContents.");
+                UI.GraphicsDevice.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
+                //throw new Exception("In order to render UI, GraphicsDevice.PresentationParameters.RenderTargetUsage must be RenderTargetUsage.PreserveContents.");
             }
 
             FontSize = DefaultFontSize;
@@ -92,6 +94,8 @@ namespace RazeUI
             MarginData margins = new MarginData(10, 10, 10, 10);
             contexts.Clear();
             NewContext(screenBounds, margins, Anchor.Vertical, false);
+
+            UI.MouseProvider?.PreDraw();
 
             // Start render.
             UI.UpdateRenderTarget();
