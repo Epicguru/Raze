@@ -37,6 +37,8 @@ namespace RazeUI
             keyboardProvider = new KeyboardProvider();
 
             Window.TextInput += keyboardProvider.OnTextInput;
+            Window.KeyDown += keyboardProvider.OnKeyDownFromWindow;
+            Window.KeyUp += keyboardProvider.OnKeyUpFromWindow;
         }
 
         protected override void Initialize()
@@ -63,17 +65,23 @@ namespace RazeUI
         }
 
         private TextBoxHandle text = new TextBoxHandle();
+        private TextBoxHandle text2 = new TextBoxHandle();
         private void DrawUI(LayoutUserInterface ui)
         {
-            if (Keyboard.GetState().IsKeyDown(Keys.Space))
+            if (Keyboard.GetState().IsKeyDown(Keys.Up))
                 ui.Scale += 0.01f;
-            if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+            if (Keyboard.GetState().IsKeyDown(Keys.Down))
                 ui.Scale -= 0.01f;
 
-            text.HintText = "Type something...";
-            ui.UI.TextBox(new Rectangle(20, 20, 250, 40), text);
+            //text.HintText = "Type something...";
+            //ui.UI.TextBoxMasked(new Rectangle(20, 20, 250, 40), text);
+
+            //text2.HintText = "Type something...";
+            //text2.AllowMultiLine = true;
+            //ui.UI.TextBoxMasked(new Rectangle(20, 60, 450, 120), text2);
 
             ui.Button("Play");
+
             if (ui.Button($"High accuracy: {ui.UI.Font.HighAccuracyPositioning}"))
             {
                 ui.UI.Font.HighAccuracyPositioning = !ui.UI.Font.HighAccuracyPositioning;
@@ -95,9 +103,9 @@ namespace RazeUI
             ui.Button("To the right of the panel\nAnd multiline!");
 
             ui.PanelContext(new Point(-100, 400), PanelType.Solid, true);
-            ui.ExpandWidth = false;
             ui.Button("This should be to the left of the long panel.");
-            ui.Button("Below?");
+            ui.ExpandWidth = false;
+            ui.TextBox(text, new Point(300, 42));
             ui.Anchor = Anchor.Horizontal;
             ui.Button("To Right?");
             ui.Anchor = Anchor.Centered;
@@ -216,12 +224,24 @@ namespace RazeUI
 
         private class KeyboardProvider : IKeyboardProvider
         {
-            public void OnTextInput(object sender, TextInputEventArgs e)
+            public void OnTextInput(object _, TextInputEventArgs e)
             {
-                OnKeyboardEvent?.Invoke(e.Key, e.Character);
+                OnKeyTyped?.Invoke(e.Key, e.Character);
             }
 
-            public event KeyboardEvent OnKeyboardEvent;
+            public void OnKeyDownFromWindow(object _, InputKeyEventArgs e)
+            {
+                OnKeyDown?.Invoke(e.Key);
+            }
+
+            public void OnKeyUpFromWindow(object _, InputKeyEventArgs e)
+            {
+                OnKeyUp?.Invoke(e.Key);
+            }
+
+            public event KeyboardEvent OnKeyTyped;
+            public event Action<Keys> OnKeyDown;
+            public event Action<Keys> OnKeyUp;
         }
     }
 }

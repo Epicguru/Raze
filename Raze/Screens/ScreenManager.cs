@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using GVS.Sprites;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using RazeContent;
 
 namespace GVS.Screens
 {
@@ -279,7 +280,7 @@ namespace GVS.Screens
             string toDraw = loading?.LoadingScreenText;
             if(toDraw != null)
             {
-                Vector2 size = Main.MediumFont.MeasureString(toDraw);
+                Point size = Main.MediumFont.MeasureString(toDraw);
                 spr.DrawString(Main.MediumFont, toDraw, new Vector2((Screen.Width - size.X) * 0.5f, (Screen.Height - size.Y) * 0.5f + 80f), tint);
             }
 

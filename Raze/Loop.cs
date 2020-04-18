@@ -106,13 +106,14 @@ namespace GVS
             public bool Waited;
             public GraphicsMetrics DrawMetrics { get; internal set; }
         }
-        public static Stats Statistics { get; private set; } = new Stats();
+        public static Stats Statistics { get; } = new Stats();
 
         private static readonly object drawKey = new object();
         private static float targetFramerate;
         private static int cumulativeFrames;
         private static readonly Stopwatch frameTimer = new Stopwatch();
         private static VSyncMode vsm = VSyncMode.ENABLED;
+        public static bool Initializing { get; private set; }
 
         private static double TargetFramerateInterval()
         {
@@ -138,6 +139,7 @@ namespace GVS
             BackupThread.Name = "Backup Rendering Thread";
             BackupThread.Priority = ThreadPriority.AboveNormal;
 
+            Initializing = true;
             Thread.Start();
             BackupThread.Start();
             frameTimer.Start();
@@ -164,6 +166,8 @@ namespace GVS
 
         private static void Run()
         {
+            typeof(Game).GetMethod("DoInitialize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(Main.Instance, new object[0]);
+            Initializing = false;
             Begin();
 
             Debug.Log("Starting game loop...");
@@ -172,12 +176,6 @@ namespace GVS
             Stopwatch watch2 = new Stopwatch();
             Stopwatch watch3 = new Stopwatch();
             Stopwatch sleepWatch = new Stopwatch();
-
-            double updateTime = 0.0;
-            double renderTime = 0.0;
-            double presentTime = 0.0;
-            double total = 0.0;
-            double sleep = 0.0;
 
             while (Running)
             {
@@ -193,7 +191,7 @@ namespace GVS
                 watch.Restart();
                 Update();
                 watch.Stop();
-                updateTime = watch.Elapsed.TotalSeconds;
+                double updateTime = watch.Elapsed.TotalSeconds;
                 Statistics.FrameUpdateTime = updateTime;
 
                 watch.Restart();
@@ -202,17 +200,17 @@ namespace GVS
                     Draw(spr);
                 }
                 watch.Stop();
-                renderTime = watch.Elapsed.TotalSeconds;
+                double renderTime = watch.Elapsed.TotalSeconds;
                 Statistics.FrameDrawTime = renderTime;
 
                 watch.Restart();
                 Present();
                 watch.Stop();
-                presentTime = watch.Elapsed.TotalSeconds;
+                double presentTime = watch.Elapsed.TotalSeconds;
                 Statistics.FramePresentingTime = presentTime;
 
-                total = updateTime + renderTime + presentTime;
-                sleep = target - total;
+                double total = updateTime + renderTime + presentTime;
+                double sleep = target - total;
 
                 if(sleep > 0.0)
                 {
@@ -254,6 +252,11 @@ namespace GVS
 
         private static void RunBackup()
         {
+            while (Initializing)
+            {
+                Thread.Sleep(5);
+            }
+
             SpriteBatch spr2 = new SpriteBatch(Main.GlobalGraphicsDevice);
 
             const float TARGET_FRAMERATE = 60f;

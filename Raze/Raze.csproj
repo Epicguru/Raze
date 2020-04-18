@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -10,15 +10,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Content\**" />
-    <EmbeddedResource Remove="Content\**" />
-    <None Remove="Content\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Lidgren.Network" Version="1.0.2" />
     <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.8.0.13" />
     <PackageReference Include="SharpNoise" Version="0.12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RazeContent\RazeContent.csproj" />
+    <ProjectReference Include="..\RazeUI\RazeUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Content\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

@@ -211,6 +211,14 @@ namespace RazeContent
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentException("Path cannot be null or whitespace");
 
+            var loader = GetLoader<T>();
+            if (loader == null)
+                throw new Exception($"Content loader for type {typeof(T).FullName} not found!");
+
+            FileInfo f = new FileInfo(path);
+            if (string.IsNullOrWhiteSpace(f.Extension))
+                path += loader.ExpectedFileExtension;
+
             string absolutePath = GetAbsolutePath(path);
             if (absolutePath == null)
                 throw new FileNotFoundException($"Failed to find the corresponding absolute path for '{path}'." +
@@ -230,10 +238,6 @@ namespace RazeContent
                     return objFromCache;
                 }
             }
-
-            var loader = GetLoader<T>();
-            if (loader == null)
-                throw new Exception($"Content loader for type {typeof(T).FullName} not found!");
 
             bool canWork = loader.VerifyFile(absolutePath, out string error);
             if (!canWork)

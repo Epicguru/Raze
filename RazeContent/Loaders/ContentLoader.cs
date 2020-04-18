@@ -9,6 +9,7 @@ namespace RazeContent.Loaders
     public abstract class ContentLoader
     {
         public Type ContentType { get; }
+        public abstract string ExpectedFileExtension { get; }
         public RazeContentManager ContentManager { get; protected internal set; }
 
         protected ContentLoader(Type type)
@@ -31,6 +32,7 @@ namespace RazeContent.Loaders
         }
 
         public abstract object Load(string path);
+
 
         /// <summary>
         /// Checks to see if a file exists, and (optionally) that the file has a particular extension (such as .png).

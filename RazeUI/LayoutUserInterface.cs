@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using RazeContent;
+using RazeUI.Handles;
 
 namespace RazeUI
 {
@@ -11,6 +12,13 @@ namespace RazeUI
 
         public UserInterface UI { get; private set; }
         public Anchor Anchor { get; set; }
+        public Rectangle LastDrawnBounds
+        {
+            get
+            {
+                return contexts.Count == 0 ? default : contexts[^1].LastDrawn;
+            }
+        }
 
         public int VerticalPadding
         {
@@ -103,6 +111,8 @@ namespace RazeUI
 
             // Clear typed keys in base.
             UI.typedKeys.Clear();
+            UI.keysDown.Clear();
+            UI.keysUp.Clear();
         }
 
         private Point GetDrawPos(Point size)
@@ -332,7 +342,7 @@ namespace RazeUI
         /// <summary>
         /// Draws a checkbox, also know as a toggle.
         /// A checkbox can be either checked or unchecked, and by clicking on it the user changes the checked state.
-        /// The checked state much be stored by the calling code via the <c>isChecked</c> ref parameter.
+        /// The checked state must be stored by the calling code via the <c>isChecked</c> ref parameter.
         /// </summary>
         /// <param name="label">The text to draw next to the toggle box. Can be null or blank to just draw the box.</param>
         /// <param name="isChecked">Stores and controls the checked state of this toggle.</param>
@@ -453,6 +463,31 @@ namespace RazeUI
             Point size = UI.Font.MeasureString(text);
             Point pos = GetDrawPos(size);
             UI.Label(pos, text, color, out Rectangle bounds);
+
+            AdvanceContext(bounds);
+        }
+
+        #endregion
+
+        #region Text Input
+
+        public void TextBox(TextBoxHandle textBox, Point size)
+        {
+            if (textBox == null)
+                return;
+
+            if (size.X <= 0 || size.Y <= 0)
+                return;
+
+            size = UI.ApplyScale(size);
+            Point pos = GetDrawPos(size);
+            if (ExpandWidth)
+            {
+                size.X = GetExpandedWidth(pos);
+            }
+
+            Rectangle bounds = new Rectangle(pos, size);
+            UI.TextBox(bounds, textBox);
 
             AdvanceContext(bounds);
         }

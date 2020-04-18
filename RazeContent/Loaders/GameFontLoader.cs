@@ -5,6 +5,8 @@ namespace RazeContent.Loaders
 {
     public class GameFontLoader : ContentLoader
     {
+        public override string ExpectedFileExtension => ".ttf";
+
         public GameFontLoader() : base(typeof(GameFont))
         {
 

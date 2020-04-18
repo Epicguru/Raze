@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using RazeContent;
 
 namespace GVS
 {
@@ -123,7 +124,7 @@ namespace GVS
 
         public static TimeSpan StopTimer(bool log = false)
         {
-            string name = timerNames.Count == 0 ? null : timerNames[timerNames.Count - 1];
+            string name = timerNames.Count == 0 ? null : timerNames[^1];
             if (timerNames.Count != 0)
                 timerNames.RemoveAt(timerNames.Count - 1);
 

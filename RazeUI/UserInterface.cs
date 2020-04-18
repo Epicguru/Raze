@@ -24,11 +24,20 @@ namespace RazeUI
             set
             {
                 if (this.keyProvider != null)
-                    this.keyProvider.OnKeyboardEvent -= OnKeyInput;
+                {
+                    this.keyProvider.OnKeyTyped -= OnKeyInput;
+                    this.keyProvider.OnKeyDown -= OnKeyDown;
+                    this.keyProvider.OnKeyUp -= OnKeyUp;
+
+                }
 
                 this.keyProvider = value;
                 if (this.keyProvider != null)
-                    this.keyProvider.OnKeyboardEvent += OnKeyInput;
+                {
+                    this.keyProvider.OnKeyTyped += OnKeyInput;
+                    this.keyProvider.OnKeyDown += OnKeyDown;
+                    this.keyProvider.OnKeyUp += OnKeyUp;
+                }
             }
         }
     
@@ -42,6 +51,9 @@ namespace RazeUI
         internal RenderTarget2D rt;
         internal bool soloRender = true;
         internal Queue<(SpecialKey special, Keys key, char character)> typedKeys = new Queue<(SpecialKey, Keys, char)>();
+        internal Queue<Keys> keysDown = new Queue<Keys>();
+        internal Queue<Keys> keysUp = new Queue<Keys>();
+        internal RasterizerState rasterizerState = new RasterizerState() { ScissorTestEnable = true };
 
         private IKeyboardProvider keyProvider;
         private NinePatch lightPanel;
@@ -112,6 +124,16 @@ namespace RazeUI
                     _ => SpecialKey.None
                 };
             }
+        }
+
+        private void OnKeyDown(Keys key)
+        {
+            keysDown.Enqueue(key);
+        }
+
+        private void OnKeyUp(Keys key)
+        {
+            keysUp.Enqueue(key);
         }
 
         public void Draw()
@@ -302,6 +324,14 @@ namespace RazeUI
 
         #region Text Input
 
+        public void TextBoxMasked(Rectangle bounds, TextBoxHandle handle)
+        {
+            this.RenderRegion(bounds, () =>
+            {
+                this.TextBox(bounds, handle);
+            });
+        }
+
         public void TextBox(Rectangle bounds, TextBoxHandle handle)
         {
             if (handle == null)
@@ -327,9 +357,14 @@ namespace RazeUI
                 while (typedKeys.Count > 0)
                 {
                     var data = typedKeys.Dequeue();
+                    bool canAddAnotherCharacter = handle.MaxCharacters <= 0 || handle.Text.Length < handle.MaxCharacters;
                     if (data.special == SpecialKey.None)
                     {
-                        handle.Text += data.character;
+                        if (canAddAnotherCharacter)
+                        {
+                            handle.Text = handle.Text.Insert(handle.CaretPosition, data.character.ToString());
+                            handle.CaretPosition++;
+                        }
                     }
                     else
                     {
@@ -338,21 +373,49 @@ namespace RazeUI
                             case SpecialKey.Tab:
                                 // Add 4 spaces? Maybe? Ignore for now.
                                 break;
+
                             case SpecialKey.Backspace:
-                                // Delete the last character.
-                                if (handle.Text.Length > 0)
+                                // Delete the character before caret
+                                if (handle.Text.Length > 0 && !handle.IsCaretAtStart)
                                 {
-                                    handle.Text = handle.Text[..^1];
+                                    bool moveBack = !handle.IsCaretAtEnd;
+                                    handle.Text = handle.Text.Remove(handle.CaretPosition - 1, 1);
+                                    if(moveBack)
+                                        handle.CaretPosition--;
                                 }
                                 break;
+
                             case SpecialKey.Delete:
-                                // TODO implement here.
+                                // Delete the character after caret.
+                                if (handle.Text.Length > 0 && !handle.IsCaretAtEnd)
+                                {
+                                    handle.Text = handle.Text.Remove(handle.CaretPosition, 1);
+                                }
                                 break;
+
                             case SpecialKey.NewLine:
-                                // TODO check if new line is allowed.
-                                handle.Text += '\n';
+                                if (handle.AllowMultiLine && canAddAnotherCharacter)
+                                {
+                                    handle.Text = handle.Text.Insert(handle.CaretPosition, "\n");
+                                    handle.CaretPosition++;
+                                }
+                                    
                                 break;
                         }
+                    }
+                }
+
+                while (keysDown.Count > 0)
+                {
+                    var key = keysDown.Dequeue();
+                    switch (key)
+                    {
+                        case Keys.Left:
+                            handle.CaretPosition--;
+                            break;
+                        case Keys.Right:
+                            handle.CaretPosition++;
+                            break;
                     }
                 }
             }
@@ -367,11 +430,53 @@ namespace RazeUI
 
             if (hasText)
             {
-                SpriteBatch.DrawString(Font, handle.Text, textPos.ToVector2(), Color.Black);
+                TextUtils.DrawLines(SpriteBatch, Font, handle.GetLines(), textPos.ToVector2(), TextAlignment.Default, Color.Green);
+                //SpriteBatch.DrawString(Font, handle.Text, textPos.ToVector2(), Color.Red);
             }
+
+            // Draw caret
+            int caretPos = handle.CaretPosition;
+            int caretLine = handle.GetCaretLine(out int lineStartIndex);
+            string caretTextLine = handle.GetLines()[caretLine];
+            string lineUpToCaret = caretTextLine.Substring(0, caretPos - lineStartIndex);
+
+            float offset = Font.MeasureString(lineUpToCaret).X;
+            Rectangle caretBounds = new Rectangle(bounds.X + 4 + (int)offset, bounds.Y + Font.Size * caretLine, 2, Font.Size);
+            SpriteBatch.Draw(pixel, caretBounds, null, Color.Black);
         }
 
         #endregion
+
+        internal void RenderRegion(Rectangle screenBounds, Action render, Color? c = null)
+        {
+            if (render == null)
+                return;
+            if (screenBounds.Width <= 0 || screenBounds.Height <= 0)
+                return;
+
+            SpriteBatch.End();
+
+            //Set up the spritebatch to draw using scissoring (for text cropping)
+            SpriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend,
+                null, null, rasterizerState);
+
+            //Copy the current scissor rect so we can restore it after
+            Rectangle currentRect = SpriteBatch.GraphicsDevice.ScissorRectangle;
+
+            //Set the current scissor rectangle
+            SpriteBatch.GraphicsDevice.ScissorRectangle = screenBounds;
+
+            // Draw!
+            render.Invoke();
+
+            //End the spritebatch
+            SpriteBatch.End();
+
+            //Reset scissor rectangle to the saved value
+            SpriteBatch.GraphicsDevice.ScissorRectangle = currentRect;
+
+            SpriteBatch.Begin();
+        }
 
         public virtual bool IsMouseOver(Rectangle bounds)
         {
@@ -396,6 +501,11 @@ namespace RazeUI
         internal Point ApplyScale(Point input)
         {
             return new Point(ApplyScale(input.X), ApplyScale(input.Y));
+        }
+
+        internal Vector2 ApplyScale(Vector2 input)
+        {
+            return new Vector2(ApplyScale(input.X), ApplyScale(input.Y));
         }
 
         internal MarginData ApplyScale(MarginData data)

@@ -3,11 +3,12 @@ using GVS.Screens.Instances;
 using GVS.Sprites;
 using GVS.World;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using RazeContent;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -18,16 +19,13 @@ namespace GVS
 {
     public class Main : Game
     {
-        public static ContentManager ContentManager
-        {
-            get { return main.Content; }
-        }
+        public static RazeContentManager ContentManager { get; private set; }
         public static GraphicsDeviceManager Graphics;
         public static GraphicsDevice GlobalGraphicsDevice;
         public static GameWindow GameWindow;
         public static SpriteBatch SpriteBatch;
         public static Camera Camera;
-        public static SpriteFont MediumFont;
+        public static GameFont MediumFont;
         public static Sprite MissingTextureSprite;
 
         // TODO fix this, need a better way for each tile to load content before packing atlas.
@@ -44,39 +42,52 @@ namespace GVS
         {
             get
             {
-                return main.thisProcess;
+                return Instance.thisProcess;
             }
         }
 
         public static string ContentDirectory { get; private set; }
         public static Rectangle ClientBounds { get; private set; }
 
-        private static Main main;
+        public static Main Instance { get; private set; }
         private static float loadIconTimer;
 
         private Process thisProcess;
 
         public Main()
         {
-            main = this;
+            Instance = this;
             Graphics = new GraphicsDeviceManager(this);
             Graphics.GraphicsProfile = GraphicsProfile.HiDef;
-            Content.RootDirectory = "Content";
             GameWindow = base.Window;
             Window.AllowUserResizing = true;
             IsMouseVisible = true;
 
             thisProcess = Process.GetCurrentProcess();
+
+            Loop.Start();
         }
 
         internal static void ForceExitGame()
         {
-            main.Exit();
+            Instance.Exit();
         }
 
         protected override void Update(GameTime gameTime)
         {
             ClientBounds = Window.ClientBounds;
+        }
+
+        protected override void BeginRun()
+        {
+            Debug.Log("BeingRun: Waiting for initialization to finish.");
+
+            while (Loop.Initializing)
+            {
+                Thread.Sleep(5);
+            }
+
+            base.BeginRun();
         }
 
         protected override void Initialize()
@@ -87,6 +98,12 @@ namespace GVS
             // Create camera.
             Camera = new Camera();
             Camera.Zoom = 0.5f;
+
+            // Find content directory...
+            ContentDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Content");
+
+            // Create content manager.
+            ContentManager = new RazeContentManager(this.GraphicsDevice, ContentDirectory);
 
             // Create screen manager.
             ScreenManager = new ScreenManager();
@@ -107,17 +124,14 @@ namespace GVS
 
         protected override void LoadContent()
         {
-            // Find content directory...
-            ContentDirectory = Path.Combine(Environment.CurrentDirectory, Content.RootDirectory);
-
             // Create a new SpriteBatch, which can be used to draw textures.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
             // Load some default fonts.
-            MediumFont = Content.Load<SpriteFont>("Fonts/MediumFont");
+            MediumFont = ContentManager.Load<GameFont>("Fonts/MediumFont");
 
             // Load loading icon atlas.
-            LoadingIconSprite = new AnimatedSprite(Content.Load<Texture2D>("Textures/LoadingIconAtlas"), 128, 128, 60);
+            LoadingIconSprite = new AnimatedSprite(ContentManager.Load<Texture2D>("Textures/LoadingIconAtlas"), 128, 128, 60);
             LoadingIconSprite.Pivot = new Vector2(0.5f, 0.5f);
 
             // Create the main sprite atlas.
@@ -158,6 +172,7 @@ namespace GVS
             Debug.Shutdown();
             thisProcess.Dispose();
             thisProcess = null;
+            Instance = null;
             base.EndRun();
         }
 

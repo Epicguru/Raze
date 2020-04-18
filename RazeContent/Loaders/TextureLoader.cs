@@ -7,6 +7,8 @@ namespace RazeContent.Loaders
 {
     public class TextureLoader : ContentLoader
     {
+        public override string ExpectedFileExtension => ".png";
+
         public TextureLoader() : base(typeof(Texture2D))
         {
 
@@ -33,6 +35,8 @@ namespace RazeContent.Loaders
                 data[i] = cOut;
             }
 
+            var fi = new FileInfo(path);
+            loaded.Name = fi.Name[..^fi.Extension.Length];
             loaded.SetData(data);
 
             return loaded;

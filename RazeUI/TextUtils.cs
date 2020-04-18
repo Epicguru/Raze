@@ -162,15 +162,15 @@ namespace RazeUI
 
         private static List<string> toWrap = new List<string>();
         private static StringBuilder str = new StringBuilder();
-        public static IReadOnlyList<string> WrapLines(GameFont font, IReadOnlyList<string> longLines, float width, bool fast = false, TextWrapMode mode = TextWrapMode.KeepWords)
+        public static void WrapLines(GameFont font, IReadOnlyList<string> longLines, IList<string> output, float width, bool fast = false, TextWrapMode mode = TextWrapMode.KeepWords)
         {
-            toWrap.Clear();
-
             if (longLines == null || longLines.Count == 0)
-                return toWrap;
+                return;
 
             if (width <= 0)
-                return toWrap;
+                return;
+
+            output.Clear();
 
             switch (mode)
             {
@@ -182,7 +182,7 @@ namespace RazeUI
 
                         if (words.Count == 0)
                         {
-                            toWrap.Add("");
+                            output.Add("");
                             continue;
                         }
 
@@ -212,7 +212,7 @@ namespace RazeUI
                                     str.Remove(str.Length - (word.Length + 1), word.Length + 1);
 
                                 // This line is complete!
-                                toWrap.Add(str.ToString().TrimEnd());
+                                output.Add(str.ToString().TrimEnd());
                                 str.Clear();
                                 size = 0f;
 
@@ -240,19 +240,24 @@ namespace RazeUI
                             if (i == words.Count - 1)
                             {
                                 // Add the existing line or it won't be included.
-                                toWrap.Add(str.ToString().TrimEnd());
+                                output.Add(str.ToString().TrimEnd());
                                 str.Clear();
                             }
                         }
                     }
-                    return toWrap;
+                    break;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, "Mode not implemented yet.");
             }
         }
 
-        //private static List<string> tempWords = new List<string>();
+        public static IReadOnlyList<string> WrapLines(GameFont font, IReadOnlyList<string> longLines, float width, bool fast = false, TextWrapMode mode = TextWrapMode.KeepWords)
+        {
+            WrapLines(font, longLines, toWrap, width, fast, mode);
+            return toWrap;
+        }
+
         private static readonly char[] splitChars = new char[] { ' ', '\t' };
         private static IReadOnlyList<string> SplitIntoWords(string line)
         {
