@@ -212,10 +212,10 @@ namespace GVS.Screens
 
                 // Load. This will block. Another thread will do the simple rendering in the meantime.
                 Time.ForceNormalTime();
-                Loop.IsBackupThreadActive = true;
+                // TODO load on another thread.
                 inLoadAlpha = -0.5f; // Hide it for a second or two, then fade in loading screen.
                 loading.Load();
-                Loop.IsBackupThreadActive = false;
+                
 
                 // Loading is now complete, in future this will be elsewhere because of thread.
 

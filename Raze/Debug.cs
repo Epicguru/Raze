@@ -284,22 +284,21 @@ namespace GVS
                 method.Invoke(spr, args);
             }
 
-            double total = Loop.Statistics.FrameTotalTime;
-            double update = Loop.Statistics.FrameUpdateTime;
-            double draw = Loop.Statistics.FrameDrawTime;
-            double present = Loop.Statistics.FramePresentingTime;
-            double sleep = Loop.Statistics.FrameSleepTime;
-            double other = total - (update + draw + present + sleep);
+            double total = Loop.FrameStats.TotalTime;
+            double update = Loop.FrameStats.UpdateTime;
+            double draw = Loop.FrameStats.DrawTime;
+            double drawUI = Loop.FrameStats.DrawUITime;
+            double present = Loop.FrameStats.PresentTime;
+            double other = total - (update + draw + drawUI + present);
 
-            bool waited = Loop.Statistics.Waited;
             if (total == 0.0)
                 total = 0.1;
 
             int i = 0;
             DrawPart(i++, "Update", update, total, Color.Violet);
             DrawPart(i++, "Draw", draw, total, Color.LightSeaGreen);
+            DrawPart(i++, "Draw UI", drawUI, total, Color.MediumPurple);
             DrawPart(i++, "Present", present, total, Color.IndianRed);
-            DrawPart(i++, $"Sleep ({(waited ? 'Y' : 'N')})", sleep, total, Color.Khaki);
             DrawPart(i++, "Other", other, total, Color.Beige);
 
             int y = 140;

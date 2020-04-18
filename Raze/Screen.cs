@@ -49,17 +49,17 @@ namespace GVS
         }
 
         /// <summary>
-        /// The current vsync mode. Exactly the same as reading and writing <see cref="Loop.VSyncMode"/>.
+        /// The current VSync mode. Exactly the same as reading and writing <see cref="Loop.VSync"/>.
         /// </summary>
-        public static VSyncMode VSyncMode
+        public static bool VSyncMode
         {
             get
             {
-                return Loop.VSyncMode;
+                return Loop.VSync;
             }
             set
             {
-                Loop.VSyncMode = value;
+                Loop.VSync = value;
             }
         }
 

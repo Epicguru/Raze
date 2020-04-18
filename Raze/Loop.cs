@@ -11,47 +11,11 @@ namespace GVS
     public static class Loop
     {
         /// <summary>
-        /// The target application framerate. The game will be updated and rendered at this frequency, whenever possible.
-        /// If set to 0 (zero) then there is no target framerate and the game will update as fast as possible.
-        /// </summary>
-        public static float TargetFramerate
-        {
-            get
-            {
-                return targetFramerate;
-            }
-            set
-            {
-                if (value == targetFramerate)
-                    return;
-
-                if (value < 0)
-                    value = 0;
-
-                targetFramerate = value;
-                Debug.Trace($"Updated target framerate to {value} {(value == 0 ? "(none)" : "")}");
-            }
-        }
-
-        /// <summary>
-        /// The current update and draw frequency that the application is running at, calculated each frame.
-        /// More accurate at lower framerates, less accurate at higher framerates. For a more stable and reliable value,
-        /// see <see cref="Framerate"/>.
-        /// </summary>
-        public static float ImmediateFramerate { get; private set; }
-
-        /// <summary>
         /// The current update and draw frequency, calculated once per second.
-        /// The framerate is affected by <see cref="TargetFramerate"/> and <see cref="VSyncMode"/> and of course
+        /// The framerate is affected by <see cref="TargetFramerate"/> and <see cref="VSync"/> and of course
         /// the actual speed of game updating and rendering.
         /// </summary>
         public static float Framerate { get; private set; }
-
-        /// <summary>
-        /// If true, then framerate is limited and maintained using a more accurate technique, leading to more
-        /// consistent framerates.
-        /// </summary>
-        public static bool EnablePrecisionFramerate { get; set; } = true;
 
         /// <summary>
         /// The color to clear the background to.
@@ -61,7 +25,7 @@ namespace GVS
         /// <summary>
         /// Gets or sets the vertical sync mode for the display. Default is disabled.
         /// </summary>
-        public static VSyncMode VSyncMode
+        public static bool VSync
         {
             get
             {
@@ -73,252 +37,85 @@ namespace GVS
                     return;
 
                 vsm = value;
-                switch (value)
-                {
-                    case VSyncMode.DISABLED:
-                        Main.GlobalGraphicsDevice.PresentationParameters.PresentationInterval = PresentInterval.Immediate;
-                        break;
-                    case VSyncMode.ENABLED:
-                        Main.GlobalGraphicsDevice.PresentationParameters.PresentationInterval = PresentInterval.One;
-                        break;
-                    case VSyncMode.DOUBLE:
-                        Main.GlobalGraphicsDevice.PresentationParameters.PresentationInterval = PresentInterval.Two;
-                        break;
-                }
+                Main.Graphics.SynchronizeWithVerticalRetrace = value;
+                Main.Graphics.ApplyChanges();
 
-                Debug.Trace($"Updated VSync mode to {value}");
+                Debug.Trace($"Changed VSync enabled to {value}");
             }
         }
 
-        public static Thread Thread { get; private set; }
-        public static bool IsBackupThreadActive { get; internal set; }
-        public static Thread BackupThread { get; private set; }
-        public static bool Running { get; private set; }
-        public static bool ThreadQuit { get; private set; }
         public static bool InUIDraw { get; private set; }
-        public class Stats
-        {
-            public double FrameTotalTime;
-            public double FrameUpdateTime;
-            public double FrameDrawTime;
-            public double FrameSleepTime;
-            public double FramePresentingTime;
-            public bool Waited;
-            public GraphicsMetrics DrawMetrics { get; internal set; }
-        }
-        public static Stats Statistics { get; } = new Stats();
 
-        private static readonly object drawKey = new object();
-        private static float targetFramerate;
+        public struct Stats
+        {
+            public double TotalTime;
+            public double UpdateTime;
+            public double DrawTime;
+            public double DrawUITime;
+            public double PresentTime;
+            public GraphicsMetrics DrawMetrics;
+
+            public override string ToString()
+            {
+                return $"Total: {TotalTime*1000f:F2}\nUpdate: {UpdateTime*1000f:F2}\nDraw: {DrawTime * 1000f:F2}\nDraw UI: {DrawUITime * 1000f:F2}\nPresent: {PresentTime * 1000f:F2}";
+            }
+        }
+        public static Stats FrameStats;
+
+        private static bool vsm;
+        private static Stats thisFrameStats;
         private static int cumulativeFrames;
-        private static readonly Stopwatch frameTimer = new Stopwatch();
-        private static VSyncMode vsm = VSyncMode.ENABLED;
-        public static bool Initializing { get; private set; }
-
-        private static double TargetFramerateInterval()
-        {
-            // Remember physics: f=1/i  so  i=1/f
-            return 1.0 / TargetFramerate;
-        }
+        private static Stopwatch tempTimer = new Stopwatch();
+        private static Stopwatch fpsTimer = new Stopwatch();
+        private static Stopwatch totalTimer = new Stopwatch();
 
         public static void Start()
         {
-            if (Running)
-                return;
-
-            Running = true;
-            ThreadQuit = false;
-
-            VSyncMode = VSyncMode.ENABLED;
-
-            Thread = new Thread(Run);
-            Thread.Name = "Game Loop";
-            Thread.Priority = ThreadPriority.Highest;
-
-            BackupThread = new Thread(RunBackup);
-            BackupThread.Name = "Backup Rendering Thread";
-            BackupThread.Priority = ThreadPriority.AboveNormal;
-
-            Initializing = true;
-            Thread.Start();
-            BackupThread.Start();
-            frameTimer.Start();
+            fpsTimer.Start();
             Framerate = 0;
-            ImmediateFramerate = 0;
         }
 
-        public static void Stop()
+        internal static void Update()
         {
-            if (!Running)
-                return;
+            totalTimer.Restart();
+            tempTimer.Restart();
 
-            Running = false;
-        }
-
-        public static void StopAndWait()
-        {
-            Stop();
-            while (!ThreadQuit)
-            {
-                Thread.Sleep(1);
-            }
-        }
-
-        private static void Run()
-        {
-            typeof(Game).GetMethod("DoInitialize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(Main.Instance, new object[0]);
-            Initializing = false;
-            Begin();
-
-            Debug.Log("Starting game loop...");
-            SpriteBatch spr = Main.SpriteBatch;
-            Stopwatch watch = new Stopwatch();
-            Stopwatch watch2 = new Stopwatch();
-            Stopwatch watch3 = new Stopwatch();
-            Stopwatch sleepWatch = new Stopwatch();
-
-            while (Running)
-            {
-                watch2.Restart();
-
-                // Determine the ideal loop time, in seconds.
-                double target = 0.0;
-                if (TargetFramerate != 0f)
-                    target = TargetFramerateInterval();
-
-                Time.StartFrame();
-
-                watch.Restart();
-                Update();
-                watch.Stop();
-                double updateTime = watch.Elapsed.TotalSeconds;
-                Statistics.FrameUpdateTime = updateTime;
-
-                watch.Restart();
-                lock (drawKey)
-                {
-                    Draw(spr);
-                }
-                watch.Stop();
-                double renderTime = watch.Elapsed.TotalSeconds;
-                Statistics.FrameDrawTime = renderTime;
-
-                watch.Restart();
-                Present();
-                watch.Stop();
-                double presentTime = watch.Elapsed.TotalSeconds;
-                Statistics.FramePresentingTime = presentTime;
-
-                double total = updateTime + renderTime + presentTime;
-                double sleep = target - total;
-
-                if(sleep > 0.0)
-                {
-                    sleepWatch.Restart();
-                    if (!EnablePrecisionFramerate)
-                    {
-                        // Sleep using the normal method. Allow the CPU to do whatever it wants.
-                        TimeSpan s = TimeSpan.FromSeconds(sleep);
-                        Thread.Sleep(s);
-                    }
-                    else
-                    {
-                        // Sleep by slowly creeping up to the target time in a loop. Sometimes more accurate.
-                        watch3.Restart();
-                        while (watch3.Elapsed.TotalSeconds + (0.001) < sleep)
-                        {
-                            Thread.Sleep(1);
-                        }
-                        watch3.Stop();
-                    }
-                    sleepWatch.Stop();
-                    Statistics.FrameSleepTime = sleepWatch.Elapsed.TotalSeconds;
-                    Statistics.Waited = true;
-                }
-                else
-                {
-                    Statistics.Waited = false;
-                }
-
-                watch2.Stop();
-                ImmediateFramerate = (float)(1.0 / watch2.Elapsed.TotalSeconds);
-                Statistics.FrameTotalTime = watch2.Elapsed.TotalSeconds;
-            }
-
-            ThreadQuit = true;
-            Thread = null;
-            Debug.Log("Stopped game loop!");
-        }
-
-        private static void RunBackup()
-        {
-            while (Initializing)
-            {
-                Thread.Sleep(5);
-            }
-
-            SpriteBatch spr2 = new SpriteBatch(Main.GlobalGraphicsDevice);
-
-            const float TARGET_FRAMERATE = 60f;
-            const float DELTA_TIME = 1f / TARGET_FRAMERATE;
-            const int WAIT_TIME = (int) (1000f / TARGET_FRAMERATE);
-
-            while (Running)
-            {
-                Thread.Sleep(WAIT_TIME);
-                if (IsBackupThreadActive)
-                {
-                    lock (drawKey)
-                    {
-                        spr2.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
-                        spr2.Draw(Debug.Pixel, new Rectangle(0, 0, Screen.Width, Screen.Height), Color.Black);
-                        Main.ScreenManager.DrawUIBackupThread(spr2, DELTA_TIME);
-                        spr2.End();
-                    }
-                    Present();
-                }
-            }
-
-            spr2.Dispose();
-        }
-
-        private static void Begin()
-        {
-
-        }
-
-        private static void Update()
-        {
-            cumulativeFrames++;
-            if(frameTimer.Elapsed.TotalSeconds >= 1.0)
-            {
-                frameTimer.Restart();
-                Framerate = cumulativeFrames;
-                cumulativeFrames = 0;
-            }
+            Time.StartFrame();
 
             Debug.Update();
             Input.StartFrame();
 
-            Debug.Text($"FPS: {Framerate:F0} (Target: {(TargetFramerate == 0 ? "uncapped" : TargetFramerate.ToString("F0"))}, VSync: {VSyncMode})");
+            // Main update here.
+            Main.MainUpdate();
+
+            Debug.Text($"FPS: {Framerate:F0}, VSync: {VSync}");
             Debug.Text($"Time Scale: {Time.TimeScale}");
             //Debug.Text($"Screen Res: ({Screen.Width}x{Screen.Height})");
             Debug.Text($"Used memory: {Main.GameProcess.PrivateMemorySize64 / 1024 / 1024}MB.");
-            Debug.Text($"Texture Swap Count: {Loop.Statistics.DrawMetrics.TextureCount}");
-            Debug.Text($"Draw Calls: {Loop.Statistics.DrawMetrics.DrawCount}");
-            Debug.Text($"Sprites Drawn: {Loop.Statistics.DrawMetrics.SpriteCount}");
+            Debug.Text($"Texture Swap Count: {Loop.FrameStats.DrawMetrics.TextureCount}");
+            Debug.Text($"Draw Calls: {Loop.FrameStats.DrawMetrics.DrawCount}");
+            Debug.Text($"Sprites Drawn: {Loop.FrameStats.DrawMetrics.SpriteCount}");
             Debug.Text($"Total Entities: {Entity.SpawnedCount}.");
             Debug.Text($"Net - Client: {Net.Client?.ConnectionStatus.ToString() ?? "null"}, Server: {Net.Server?.Status.ToString() ?? "null"}");
             Debug.Text($"Under mouse: {(Input.TileUnderMouse == null ? "null" : Input.TileUnderMouse.Position.ToString())}");
 
-            // Update currently active screen.
-            Main.MainUpdate();
-
             Input.EndFrame();
+
+            cumulativeFrames++;
+            if (fpsTimer.Elapsed.TotalSeconds >= 1.0)
+            {
+                fpsTimer.Restart();
+                Framerate = cumulativeFrames;
+                cumulativeFrames = 0;
+            }
+
+            tempTimer.Stop();
+            thisFrameStats.UpdateTime = tempTimer.Elapsed.TotalSeconds;
         }
 
-        private static void Draw(SpriteBatch spr)
+        internal static void Draw(SpriteBatch spr)
         {
+            tempTimer.Restart();
             Main.Camera.UpdateMatrix(Main.GlobalGraphicsDevice);
             Main.GlobalGraphicsDevice.Clear(ClearColor);
 
@@ -334,9 +131,14 @@ namespace GVS
             Debug.Draw(spr);
             spr.End();
 
+            tempTimer.Stop();
+            thisFrameStats.DrawTime = tempTimer.Elapsed.TotalSeconds;
+
             InUIDraw = true;
 
-            spr.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, null, null, null, null, null);
+            tempTimer.Restart();
+
+            spr.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, null, null, null, null, null);
 
             // Draw the UI.
             Main.MainDrawUI();
@@ -345,12 +147,29 @@ namespace GVS
             spr.End();
 
             InUIDraw = false;
+
+            tempTimer.Stop();
+            thisFrameStats.DrawUITime = tempTimer.Elapsed.TotalSeconds;
         }
 
-        private static void Present()
+        internal static void Present()
         {
-            Statistics.DrawMetrics = Main.GlobalGraphicsDevice.Metrics;
+            tempTimer.Restart();
+
             Main.GlobalGraphicsDevice.Present();
+
+            tempTimer.Stop();
+
+            thisFrameStats.PresentTime = tempTimer.Elapsed.TotalSeconds;
+
+            totalTimer.Stop();
+            thisFrameStats.TotalTime = totalTimer.Elapsed.TotalSeconds; // TODO fix this so that the debug drawer doesn't mix info from two frames
+            Debug.Log($"{thisFrameStats}");
+
+            thisFrameStats.DrawMetrics = Main.GlobalGraphicsDevice.Metrics;
+
+            FrameStats = thisFrameStats;
+            thisFrameStats = default;
         }
     }
 }

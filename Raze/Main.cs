@@ -8,7 +8,6 @@ using RazeContent;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -62,32 +61,14 @@ namespace GVS
             GameWindow = base.Window;
             Window.AllowUserResizing = true;
             IsMouseVisible = true;
+            IsFixedTimeStep = false;
 
             thisProcess = Process.GetCurrentProcess();
-
-            Loop.Start();
         }
 
-        internal static void ForceExitGame()
+        public static void ForceExitGame()
         {
             Instance.Exit();
-        }
-
-        protected override void Update(GameTime gameTime)
-        {
-            ClientBounds = Window.ClientBounds;
-        }
-
-        protected override void BeginRun()
-        {
-            Debug.Log("BeingRun: Waiting for initialization to finish.");
-
-            while (Loop.Initializing)
-            {
-                Thread.Sleep(5);
-            }
-
-            base.BeginRun();
         }
 
         protected override void Initialize()
@@ -129,6 +110,7 @@ namespace GVS
 
             // Load some default fonts.
             MediumFont = ContentManager.Load<GameFont>("Fonts/MediumFont");
+            MediumFont.Size = 24;
 
             // Load loading icon atlas.
             LoadingIconSprite = new AnimatedSprite(ContentManager.Load<Texture2D>("Textures/LoadingIconAtlas"), 128, 128, 60);
@@ -157,7 +139,7 @@ namespace GVS
 
             SpriteAtlas.Pack(false);
 
-            Loop.Start();           
+            Loop.Start();         
         }
 
         protected override void UnloadContent()
@@ -167,7 +149,6 @@ namespace GVS
 
         protected override void EndRun()
         {
-            Loop.StopAndWait();
             ScreenManager.Shutdown();
             Debug.Shutdown();
             thisProcess.Dispose();
@@ -176,9 +157,21 @@ namespace GVS
             base.EndRun();
         }
 
+        protected override void Update(GameTime gameTime)
+        {
+            ClientBounds = Window.ClientBounds;
+            Loop.Update();
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            Loop.Draw(SpriteBatch);
+        }
+
         protected override void EndDraw()
         {
             // Do not present the device to the screen, this is handled in the Loop class.
+            Loop.Present();
         }
 
         internal static void MainUpdate()
