@@ -1,4 +1,4 @@
-﻿namespace GVS.Networking
+﻿namespace Raze.Networking
 {
     public static class NetMessageType
     {

@@ -1,8 +1,8 @@
-﻿using GVS.Sprites;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Raze.Sprites;
 
-namespace GVS.World.Tiles.Components
+namespace Raze.World.Tiles.Components
 {
     public class Trees : TileComponent
     {

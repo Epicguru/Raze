@@ -1,10 +1,10 @@
-﻿using GVS.Sprites;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
+using Raze.Sprites;
 
-namespace GVS.World
+namespace Raze.World
 {
     public class TileAtlas : IDisposable
     {

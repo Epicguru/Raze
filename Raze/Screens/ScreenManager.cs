@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using GVS.Sprites;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Raze.Sprites;
 using RazeContent;
 
-namespace GVS.Screens
+namespace Raze.Screens
 {
     public class ScreenManager
     {

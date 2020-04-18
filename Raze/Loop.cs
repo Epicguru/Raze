@@ -1,12 +1,10 @@
-using GVS.Entities;
-using GVS.Networking;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Diagnostics;
-using System.Threading;
+using Raze.Entities;
+using Raze.Networking;
 
-namespace GVS
+namespace Raze
 {
     public static class Loop
     {

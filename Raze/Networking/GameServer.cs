@@ -1,10 +1,10 @@
-﻿using GVS.Networking.Players;
-using GVS.World;
-using Lidgren.Network;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Lidgren.Network;
+using Raze.Networking.Players;
+using Raze.World;
 
-namespace GVS.Networking
+namespace Raze.Networking
 {
     public class GameServer : NetPeerBase
     {

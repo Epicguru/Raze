@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 
-namespace GVS.Screens
+namespace Raze.Screens
 {
     public abstract class GameScreen
     {

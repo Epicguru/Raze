@@ -1,6 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-
-namespace GVS.Screens.Instances
+﻿namespace Raze.Screens.Instances
 {
     public class MainMenuScreen : GameScreen
     {

@@ -1,14 +1,14 @@
-﻿using GVS.IO;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Raze.IO;
 using RazeContent;
 
-namespace GVS
+namespace Raze
 {
     public static class Debug
     {

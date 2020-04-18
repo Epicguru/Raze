@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GVS
+namespace Raze
 {
     /// <summary>
     /// The main class.

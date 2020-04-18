@@ -1,4 +1,4 @@
-namespace GVS
+namespace Raze
 {
     public static class Screen
     {

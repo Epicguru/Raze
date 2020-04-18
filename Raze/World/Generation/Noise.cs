@@ -1,7 +1,7 @@
 ﻿using System;
 using SharpNoise.Modules;
 
-namespace GVS.World.Generation
+namespace Raze.World.Generation
 {
     public class Noise : IDisposable
     {

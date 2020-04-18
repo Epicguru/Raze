@@ -1,8 +1,8 @@
-﻿using GVS.World;
-using Lidgren.Network;
+﻿using Lidgren.Network;
 using Microsoft.Xna.Framework;
+using Raze.World;
 
-namespace GVS
+namespace Raze
 {
     public static class Extensions
     {

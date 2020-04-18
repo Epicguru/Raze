@@ -1,18 +1,18 @@
-﻿using GVS.Entities;
-using GVS.Entities.Instances;
-using GVS.Networking;
-using GVS.Reflection;
-using GVS.World;
-using GVS.World.Generation;
-using GVS.World.Tiles;
-using GVS.World.Tiles.Components;
+﻿using System;
 using Lidgren.Network;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
+using Raze.Entities;
+using Raze.Entities.Instances;
+using Raze.Networking;
+using Raze.Reflection;
+using Raze.World;
+using Raze.World.Generation;
+using Raze.World.Tiles;
+using Raze.World.Tiles.Components;
 
-namespace GVS.Screens.Instances
+namespace Raze.Screens.Instances
 {
     public partial class PlayScreen : GameScreen
     {

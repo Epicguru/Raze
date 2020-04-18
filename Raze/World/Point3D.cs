@@ -1,7 +1,7 @@
 ﻿
 using Microsoft.Xna.Framework;
 
-namespace GVS.World
+namespace Raze.World
 {
     public struct Point3D
     {

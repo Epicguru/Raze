@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace GVS.Sprites
+namespace Raze.Sprites
 {
     public class Sprite
     {

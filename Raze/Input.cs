@@ -1,8 +1,8 @@
-﻿using GVS.World;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Raze.World;
 
-namespace GVS
+namespace Raze
 {
     /// <summary>
     /// A static class that collects all of XNA's input utilities into one place.

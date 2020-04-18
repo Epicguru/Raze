@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 
-namespace GVS.Entities.Instances
+namespace Raze.Entities.Instances
 {
     internal class DevTroop : Entity
     {

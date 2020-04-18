@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace GVS
+namespace Raze
 {
     public static class Time
     {

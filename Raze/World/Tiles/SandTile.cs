@@ -1,4 +1,4 @@
-﻿namespace GVS.World.Tiles
+﻿namespace Raze.World.Tiles
 {
     public class SandTile : Tile
     {

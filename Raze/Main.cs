@@ -1,20 +1,20 @@
-﻿using GVS.Screens;
-using GVS.Screens.Instances;
-using GVS.Sprites;
-using GVS.World;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using RazeContent;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Raze.Screens;
+using Raze.Screens.Instances;
+using Raze.Sprites;
+using Raze.World;
+using RazeContent;
 
 // Allow GVS Tests to access 'internal' methods, fields etc.
 [assembly: InternalsVisibleTo("GVS_Tests")]
 
-namespace GVS
+namespace Raze
 {
     public class Main : Game
     {

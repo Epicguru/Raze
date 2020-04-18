@@ -1,7 +1,7 @@
-﻿using GVS.Networking.Players;
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Graphics;
+using Raze.Networking.Players;
 
-namespace GVS.Screens.Instances
+namespace Raze.Screens.Instances
 {
     public partial class PlayScreen
     {

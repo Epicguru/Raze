@@ -1,7 +1,7 @@
-﻿using GVS.Networking;
-using Lidgren.Network;
+﻿using Lidgren.Network;
+using Raze.Networking;
 
-namespace GVS.Screens.Instances
+namespace Raze.Screens.Instances
 {
     public class ConnectScreen : GameScreen
     {

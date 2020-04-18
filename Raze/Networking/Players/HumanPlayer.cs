@@ -1,6 +1,6 @@
 ﻿using Lidgren.Network;
 
-namespace GVS.Networking.Players
+namespace Raze.Networking.Players
 {
     /// <summary>
     /// A human player is a player, who is human. Duh. As opposed to a bot.

@@ -1,8 +1,8 @@
-﻿using GVS.Sprites;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Raze.Sprites;
 
-namespace GVS.Screens.Instances
+namespace Raze.Screens.Instances
 {
     public class SplashScreen : GameScreen
     {

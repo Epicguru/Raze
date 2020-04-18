@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Lidgren.Network;
 
-namespace GVS.Networking
+namespace Raze.Networking
 {
     public abstract class NetPeerBase : IDisposable
     {

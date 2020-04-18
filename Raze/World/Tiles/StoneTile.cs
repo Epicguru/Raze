@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 
-namespace GVS.World.Tiles
+namespace Raze.World.Tiles
 {
     public class StoneTile : Tile
     {

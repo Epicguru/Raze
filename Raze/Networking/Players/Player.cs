@@ -1,6 +1,6 @@
 ﻿using Lidgren.Network;
 
-namespace GVS.Networking.Players
+namespace Raze.Networking.Players
 {
     /// <summary>
     /// A player is a human or a bot that is playing the game.

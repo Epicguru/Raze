@@ -1,8 +1,8 @@
-﻿using GVS.World;
-using System;
+﻿using System;
 using System.Reflection;
+using Raze.World;
 
-namespace GVS.Reflection
+namespace Raze.Reflection
 {
     public class ClassExtractor
     {

@@ -5,7 +5,7 @@ using Lidgren.Network;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace GVS.World
+namespace Raze.World
 {
     public class TileComponent
     {

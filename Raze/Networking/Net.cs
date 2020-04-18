@@ -1,7 +1,7 @@
 ﻿using System;
-using GVS.Networking.Players;
+using Raze.Networking.Players;
 
-namespace GVS.Networking
+namespace Raze.Networking
 {
     public static class Net
     {

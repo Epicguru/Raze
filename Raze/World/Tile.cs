@@ -1,12 +1,12 @@
-﻿using GVS.Sprites;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Lidgren.Network;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
+using Raze.Sprites;
 
-namespace GVS.World
+namespace Raze.World
 {
     public abstract class Tile
     {

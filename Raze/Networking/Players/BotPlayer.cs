@@ -1,4 +1,4 @@
-﻿namespace GVS.Networking.Players
+﻿namespace Raze.Networking.Players
 {
     /// <summary>
     /// A bot player is a player in the game that is controlled by AI.

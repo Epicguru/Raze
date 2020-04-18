@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
-using GVS.Sprites;
-using GVS.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Raze.Sprites;
+using Raze.World;
 
-namespace GVS.Entities
+namespace Raze.Entities
 {
     public abstract class Entity
     {

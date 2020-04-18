@@ -1,11 +1,10 @@
-﻿
-using GVS.Networking;
+﻿using System;
 using Lidgren.Network;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
+using Raze.Networking;
 
-namespace GVS.World
+namespace Raze.World
 {
     public class IsoMap : IDisposable
     {
