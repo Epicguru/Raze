@@ -1,11 +1,12 @@
-﻿namespace RazeUI.Handles
+﻿using RazeUI.Handles.Validators;
+
+namespace RazeUI.Handles
 {
     public class TextBoxHandle : IElementHandle
     {
         public bool IsMouseOver { get; set; }
         public bool IsSelected { get; set; }
         public bool AllowMultiLine { get; set; } = false;
-
         public string Text
         {
             get
@@ -24,7 +25,6 @@
         }
         public string HintText { get; set; }
         public int MaxCharacters { get; set; }
-
         public bool IsCaretAtEnd
         {
             get
@@ -39,7 +39,6 @@
                 return CaretPosition == 0;
             }
         }
-
         public int CaretPosition
         {
             get
@@ -51,7 +50,7 @@
                 caretPos = GetCorrectedCaretPosition(value);
             }
         }
-
+        public ITextValidator Validator { get; set; }
 
         private string[] lines;
         private bool linesDirty = true;
@@ -100,6 +99,22 @@
 
             lineStartIndex = startIndex;
             return line;
+        }
+
+        public bool IsValid(char c)
+        {
+            if (Validator == null)
+                return true;
+
+            return Validator.IsCharacterValid(c);
+        }
+
+        public bool IsValid(ref string str)
+        {
+            if (Validator == null)
+                return true;
+
+            return Validator.IsStringValid(ref str);
         }
     }
 }

@@ -1,34 +1,102 @@
 ﻿using Lidgren.Network;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Raze.Networking;
+using RazeUI;
+using RazeUI.Handles;
+using RazeUI.Handles.Validators;
+using RazeUI.Windows;
 
 namespace Raze.Screens.Instances
 {
     public class ConnectScreen : GameScreen
     {
+        private TextBoxHandle ipInput = new TextBoxHandle(){HintText = "Type Ip address...", MaxCharacters = 16, Text = "localhost", Validator = new TextIPAddressValidator()};
+        private TextBoxHandle portInput = new TextBoxHandle() { HintText = "Type port number...", MaxCharacters = 9, Text = "7777", Validator = new TextIntegerValidator() };
+        private TextBoxHandle passwordInput = new TextBoxHandle() { HintText = "Password (leave blank for no password)" };
+        private string connectionStatus = "";
+        private bool isConnecting;
+
         public ConnectScreen() : base("Connect Screen")
         {
         }
 
-        public override void Load()
+        public override void DrawUI(SpriteBatch _, LayoutUserInterface ui)
         {
+            if (isConnecting)
+                DrawConnectingUI(ui);
+            else
+                DrawInputUI(ui);
+        }
 
+        private void DrawInputUI(LayoutUserInterface ui)
+        {
+            int sw = ui.IMGUI.ScreenProvider.GetWidth();
+            int sh = ui.IMGUI.ScreenProvider.GetHeight();
+            int w = 350;
+            int h = 350;
+
+            var sb = new Rectangle((sw - w) / 2, (sh - h) / 2, w, h);
+
+            ui.PanelContext(sb, PanelType.Default);
+            var panel = ui.GetContextInnerBounds();
+
+            ui.TextBox(ipInput, new Point(panel.Width, 40));
+            ui.TextBox(portInput, new Point(panel.Width, 40));
+            ui.TextBox(passwordInput, new Point(panel.Width, 40));
+            ui.FlatSeparator();
+            if (ui.Button("Connect"))
+            {
+                OnConnectClicked();
+            }
+            ui.ActiveTint = Color.Red;
+            if (ui.IMGUI.Button(new Rectangle(panel.X, panel.Bottom - 32, panel.Width, 32), "Cancel"))
+            {
+                OnExitClicked();
+            }
+            ui.ActiveTint = Color.White;
+
+            ui.EndContext();
+        }
+
+        private void DrawConnectingUI(LayoutUserInterface ui)
+        {
+            int sw = ui.IMGUI.ScreenProvider.GetWidth();
+            int sh = ui.IMGUI.ScreenProvider.GetHeight();
+            int w = 450;
+            int h = 250;
+
+            var sb = new Rectangle((sw - w) / 2, (sh - h) / 2, w, h);
+
+            ui.PanelContext(sb);
+
+            ui.Anchor = Anchor.Centered;
+            ui.Paragraph(connectionStatus, TextAlignment.Centered, Color.White);
+            ui.Anchor = Anchor.Vertical;
+            ui.FlatSeparator();
+            if (ui.Button("Cancel"))
+            {
+                OnCancelConnectClicked();
+            }
+
+            ui.EndContext();
         }
 
         public void OnConnectClicked()
         {
-            string ip = "localhost";
-            string port = "7777";
-            string password = "";
+            string ip = ipInput.Text;
+            string port = portInput.Text;
+            string password = passwordInput.Text;
 
-            //MessageBox.DefaultMsgBoxSize = new Vector2(300, 300);
             if (string.IsNullOrWhiteSpace(ip))
             {
-                //MessageBox.ShowMsgBox("Error", "Please input an IP address to connect to.", "Ok");
+                new MessageBox("Error", "Please input an IP address to connect to.").Show();
                 return;
             }
             if (string.IsNullOrWhiteSpace(port))
             {
-                //MessageBox.ShowMsgBox("Error", "Please input a port number to connect on.", "Ok");
+                new MessageBox("Error", "Please input a port number to connect on.").Show();
+
                 return;
             }
 
@@ -38,7 +106,8 @@ namespace Raze.Screens.Instances
             bool worked = Net.Client.Connect(ip, portNum, out string error, password);
             if (!worked)
             {
-                //MessageBox.ShowMsgBox("Failed to connect", $"Connecting failed:\n{error}");
+                new MessageBox("Failed to connect", $"Connecting failed:\n{error}").Show();
+
                 return;
             }
 
@@ -59,12 +128,12 @@ namespace Raze.Screens.Instances
 
         private void ToggleConnectPanel(bool visible)
         {
-            // URGTODO reimplement
+            isConnecting = visible;
         }
 
         private void SetConnectionStatus(string txt)
         {
-            // URGTODO reimplement
+            connectionStatus = txt;
         }
 
         public override void UponShow()
@@ -109,8 +178,8 @@ namespace Raze.Screens.Instances
         private void OnClientDisconnected(string reason)
         {
             ToggleConnectPanel(false);
-            // URGTODO re-implement
-            //MessageBox.ShowMsgBox("Failed to connect", $"Connection was rejected:\n{reason}");
+            new MessageBox("Failed to connect", $"Connection was rejected:\n{reason}").Show();
+
         }
 
         public override void Update()

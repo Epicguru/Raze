@@ -1,9 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Raze.Screens;
 using Raze.Screens.Instances;
@@ -12,6 +7,11 @@ using Raze.World;
 using RazeContent;
 using RazeUI;
 using RazeUI.Providers.Implementations;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 // Allow GVS Tests to access 'internal' methods, fields etc.
 [assembly: InternalsVisibleTo("GVS_Tests")]
@@ -38,7 +38,7 @@ namespace Raze
 
         public static LayoutUserInterface LayoutUI { get; private set; }
         public static ScreenManager ScreenManager { get; private set; }
-        public static TileAtlas SpriteAtlas { get; private set; }
+        public static SpriteAtlas SpriteAtlas { get; private set; }
         public static IsoMap Map { get; internal set; }
         public static Process GameProcess
         {
@@ -131,7 +131,7 @@ namespace Raze
             LoadingIconSprite.Pivot = new Vector2(0.5f, 0.5f);
 
             // Create the main sprite atlas.
-            SpriteAtlas = new TileAtlas(1024, 1024);
+            SpriteAtlas = new SpriteAtlas(1024, 1024);
 
             // Loading missing texture sprite.
             MissingTextureSprite = SpriteAtlas.Add("Textures/MissingTexture");

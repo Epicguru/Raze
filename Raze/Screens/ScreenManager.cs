@@ -14,7 +14,7 @@ namespace Raze.Screens
         public bool IsTransitioning { get; private set; }
 
         // Effects settings.
-        public float FadeTime = 0.5f;
+        public float FadeTime = 0.25f;
 
         private readonly Dictionary<Type, GameScreen> registered = new Dictionary<Type, GameScreen>();
         private readonly Dictionary<string, GameScreen> typeNameRegistered = new Dictionary<string, GameScreen>();
@@ -216,7 +216,6 @@ namespace Raze.Screens
                 // TODO load on another thread.
                 inLoadAlpha = -0.5f; // Hide it for a second or two, then fade in loading screen.
                 loading.Load();
-                
 
                 // Loading is now complete, in future this will be elsewhere because of thread.
 
@@ -268,7 +267,7 @@ namespace Raze.Screens
             CurrentScreen?.DrawUI(spr, ui);
 
             // Draw fade thing.
-            ui.UI.GlobalTint = new Color(0, 0, 0, fadeLerp);
+            ui.IMGUI.GlobalTint = new Color(1, 1, 1, 1f - fadeLerp);
         }
 
         public void DrawUIBackupThread(SpriteBatch spr, float dt)

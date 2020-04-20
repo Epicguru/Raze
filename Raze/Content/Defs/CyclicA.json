@@ -1,0 +1,5 @@
+{
+    "Name": "CyclicA",
+    "Parent": "CyclicB",
+    "Class": "Raze.Defs.Cyclic"
+}

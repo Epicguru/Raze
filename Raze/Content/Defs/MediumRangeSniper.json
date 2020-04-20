@@ -1,0 +1,6 @@
+{
+    "Name": "MediumRangeSniper",
+    "Parent": "Sniper",
+    "Range": 200.0,
+    "Attack": 150
+}

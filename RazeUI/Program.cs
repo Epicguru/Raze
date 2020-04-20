@@ -68,13 +68,13 @@ namespace RazeUI
 
             ui.Button("Play");
 
-            if (ui.Button($"High accuracy: {ui.UI.Font.HighAccuracyPositioning}"))
+            if (ui.Button($"High accuracy: {ui.IMGUI.Font.HighAccuracyPositioning}"))
             {
-                ui.UI.Font.HighAccuracyPositioning = !ui.UI.Font.HighAccuracyPositioning;
-                ui.UI.Font.Clean();
+                ui.IMGUI.Font.HighAccuracyPositioning = !ui.IMGUI.Font.HighAccuracyPositioning;
+                ui.IMGUI.Font.Clean();
             }
 
-            ui.PanelContext(new Point(300, 400), PanelType.Solid);
+            ui.PanelContext(new Point(300, 400), PanelType.Special);
             ui.Button("I'm inside the panel.");
             ui.Button("Me too");
             ui.Checkbox("Checkbox!", ref A);
@@ -83,12 +83,12 @@ namespace RazeUI
             ui.Button("Button -> ");
             ui.Anchor = Anchor.Horizontal;
             ui.Checkbox("Toggle!", ref A);
-            ui.ReleaseContext();
+            ui.EndContext();
 
             ui.Anchor = Anchor.Horizontal;
             ui.Button("To the right of the panel\nAnd multiline!");
 
-            ui.PanelContext(new Point(-100, 400), PanelType.Solid, true);
+            ui.PanelContext(new Point(-100, 400), PanelType.Special, true);
             ui.Button("This should be to the left of the long panel.");
             ui.ExpandWidth = false;
             ui.TextBox(text, new Point(300, 42));
@@ -99,7 +99,7 @@ namespace RazeUI
             ui.Button("Centered and tall?", new Point(0, 100));
             ui.FlatSeparator(null, Color.White);
             ui.Checkbox("Centered checkbox", ref B);
-            ui.ReleaseContext();
+            ui.EndContext();
 
             ui.Anchor = Anchor.Horizontal;
             ui.Button("Hi :)");

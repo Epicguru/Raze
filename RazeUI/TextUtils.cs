@@ -23,7 +23,7 @@ namespace RazeUI
             DrawLines(spr, font, lines, topLeft, alignment, color);
         }
 
-        public static void DrawLines(SpriteBatch spr, GameFont font, IReadOnlyList<string> linesOfText, Vector2 topLeft, TextAlignment alignment, Color color)
+        public static Rectangle DrawLines(SpriteBatch spr, GameFont font, IReadOnlyList<string> linesOfText, Vector2 topLeft, TextAlignment alignment, Color color, Point? linesSize = null)
         {
             if (spr == null)
                 throw new ArgumentNullException(nameof(spr));
@@ -31,12 +31,17 @@ namespace RazeUI
                 throw new ArgumentNullException(nameof(font));
 
             if (linesOfText == null || linesOfText.Count == 0)
-                return; // Should this throw exception?
+                return default; // Should this throw exception?
 
             if (alignment == TextAlignment.Default)
                 alignment = DefaultAlignment;
 
             float spacing = GetSpacing(font);
+
+            if (linesSize == null)
+            {
+                linesSize = TextUtils.MeasureLines(font, linesOfText, alignment);
+            }
 
             switch (alignment)
             {
@@ -53,13 +58,12 @@ namespace RazeUI
                         spr.DrawString(font, line, topLeft + offset, color, 1f);                       
                     }
 
-                    break;
+                    return new Rectangle(topLeft.ToPoint(), linesSize.Value);
 
                 case TextAlignment.Right:
                     // Position is the top left corner.
 
-                    var measured = MeasureLines(font, linesOfText, alignment);
-                    float w = measured.X;
+                    float w = linesSize.Value.X;
 
                     for (int i = 0; i < linesOfText.Count; i++)
                     {
@@ -73,14 +77,13 @@ namespace RazeUI
                         spr.DrawString(font, line, topLeft + offset, color, 1f);
                     }
 
-                    break;
+                    return new Rectangle(topLeft.ToPoint(), linesSize.Value);
 
                 case TextAlignment.Centered:
                     // Position is the top left corner
 
                     // Need to measure width to know where to draw.
-                    measured = MeasureLines(font, linesOfText, alignment);
-                    w = measured.X;
+                    w = linesSize.Value.X;
 
                     for (int i = 0; i < linesOfText.Count; i++)
                     {
@@ -94,10 +97,10 @@ namespace RazeUI
                         spr.DrawString(font, line, topLeft + offset, color, 1f);
                     }
 
-                    break;
+                    return new Rectangle(topLeft.ToPoint(), linesSize.Value);
 
                 default:
-                    return;
+                    return default;
             }
         }
 

@@ -1,0 +1,6 @@
+{
+    "Name": "LongRangeSniper",
+    "Parent": "Sniper",
+    "Range": "500.0",
+    "Enemies": ["Ultra-long range target"]
+}

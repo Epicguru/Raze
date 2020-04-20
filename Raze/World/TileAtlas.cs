@@ -6,7 +6,7 @@ using Raze.Sprites;
 
 namespace Raze.World
 {
-    public class TileAtlas : IDisposable
+    public class SpriteAtlas : IDisposable
     {
         public SortMode SortingMode { get; set; } = SortMode.Height;
         public SortDirection SortingDirection { get; set; } = SortDirection.Descending;
@@ -53,13 +53,13 @@ namespace Raze.World
             public readonly Sprite Sprite;
             public Texture2D Texture;
 
-            private readonly TileAtlas atlas;
+            private readonly SpriteAtlas atlas;
 
             public int Width { get { return Texture.Width; } }
             public int Height { get { return Texture.Height; } }
             public int MaxLength { get { return MathHelper.Max(Width, Height); } }
 
-            public SpriteWrapper(TileAtlas a, Texture2D tex, Sprite sprite)
+            public SpriteWrapper(SpriteAtlas a, Texture2D tex, Sprite sprite)
             {
                 this.atlas = a;
                 this.Texture = tex;
@@ -113,7 +113,7 @@ namespace Raze.World
             }
         }
 
-        public TileAtlas(int width, int height)
+        public SpriteAtlas(int width, int height)
         {
             if (width < 1)
                 throw new ArgumentOutOfRangeException(nameof(width), "Width must be at least 1.");

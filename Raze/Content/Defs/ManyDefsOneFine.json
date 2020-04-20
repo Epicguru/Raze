@@ -1,0 +1,20 @@
+[
+    {
+        "Name": "SomeParent",
+        "Class": "Raze.Defs.CarDef",
+        "Abstract": true
+    },
+    {
+        "Name": "SomeChild",
+        "Parent": "SomeParent"
+    },
+    {
+        "Name": "AnotherChild",
+        "Parent": "SomeParent",
+        "AllowAdditionalData": true,
+        "SomeCustomData": {
+            "X": 200,
+            "Y": 400
+        }
+    }
+]
