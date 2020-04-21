@@ -1,0 +1,5 @@
+{
+    "Name": "Liquid",
+    "Parent": "Tile",
+    "Sprite": "Textures/Tiles/Water"
+}

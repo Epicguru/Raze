@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Raze.Defs;
 using Raze.Screens;
 using Raze.Screens.Instances;
 using Raze.Sprites;
@@ -30,12 +31,13 @@ namespace Raze
         public static Sprite MissingTextureSprite { get; private set; }
 
         // TODO fix this, need a better way for each tile to load content before packing atlas.
-        public static Sprite GrassTile, MountainTile, TreeTile, StoneTile, StoneTopTile;
-        public static Sprite WaterTile, SandTile, HouseTile;
+        public static Sprite MountainTile, TreeTile;
+        public static Sprite HouseTile;
         public static Sprite TileShadowTopLeft, TileShadowTopRight, TileShadowBottomLeft, TileShadowBottomRight;
 
         public static AnimatedSprite LoadingIconSprite { get; private set; }
 
+        public static DefDatabase DefDatabase { get; private set; }
         public static LayoutUserInterface LayoutUI { get; private set; }
         public static ScreenManager ScreenManager { get; private set; }
         public static SpriteAtlas SpriteAtlas { get; private set; }
@@ -138,18 +140,28 @@ namespace Raze
             MissingTextureSprite.Pivot = new Vector2(0.5f, 1f); // Bottom center.
 
             // Temporarily load tiles here.
-            GrassTile = SpriteAtlas.Add("Textures/GrassTile");
-            MountainTile = SpriteAtlas.Add("Textures/Mountain");
-            TreeTile = SpriteAtlas.Add("Textures/Trees");
-            StoneTile = SpriteAtlas.Add("Textures/StoneTile");
-            StoneTopTile = SpriteAtlas.Add("Textures/StoneTop");
-            WaterTile = SpriteAtlas.Add("Textures/WaterTile");
-            SandTile = SpriteAtlas.Add("Textures/SandTile");
+            TreeTile = SpriteAtlas.Add("Textures/TileComps/Trees");
+            MountainTile = SpriteAtlas.Add("Textures/TileComps/Mountain");
             TileShadowTopRight = SpriteAtlas.Add("Textures/TileShadowTopRight");
             TileShadowTopLeft = SpriteAtlas.Add("Textures/TileShadowTopLeft");
             TileShadowBottomRight = SpriteAtlas.Add("Textures/TileShadowBottomRight");
             TileShadowBottomLeft = SpriteAtlas.Add("Textures/TileShadowBottomLeft");
-            HouseTile = SpriteAtlas.Add("Textures/HouseTile");
+            HouseTile = SpriteAtlas.Add("Textures/TileComps/House");
+
+            // Load definitions.
+            string defPath = Path.Combine(ContentDirectory, "Defs");
+            DefDatabase = new DefDatabase();
+            Debug.StartTimer("Load def files");
+            DefDatabase.AddAllFromDirectory(defPath);
+            Debug.StopTimer(true);
+            Debug.StartTimer("Parse & resolve defs");
+            DefDatabase.Load();
+            Debug.StopTimer(true);
+
+            // Tile loading from defs.
+            Debug.StartTimer("Tile def load");
+            Tile.PostLoadDefs();
+            Debug.StopTimer(true);
 
             SpriteAtlas.Pack(false);
 

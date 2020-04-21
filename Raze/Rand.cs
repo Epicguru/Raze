@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 
 namespace Raze
 {
@@ -6,6 +7,15 @@ namespace Raze
     {
         private static System.Random rand = new System.Random();
         private const int MAX_RAND = int.MaxValue / 2;
+
+        /// <summary>
+        /// Reseeds Rand to a random seed. Basically randomizing the randomizer. This is useful to remove the 'predictability'
+        /// created by calling <see cref="Reseed(int)"/> or <see cref="Reseed(string)"/>.
+        /// </summary>
+        public static void ReseedRandom()
+        {
+            Reseed(new Random().Next(int.MinValue, int.MaxValue));
+        }
 
         /// <summary>
         /// Reseeds the internal random number generator with this new seed value. This can be used to create
@@ -77,7 +87,7 @@ namespace Raze
 
         /// <summary>
         /// Gets a true of false value based on a probability to give true.
-        /// For example, calling <code>Chance(0.9)</code> has a 90% chance to return true, and a 10% chance
+        /// For example, calling <c>Chance(0.9)</c> has a 90% chance to return true, and a 10% chance
         /// of returning false;
         /// </summary>
         /// <param name="probability">The probability value of returning true. Should be in the range 0 to 1.</param>

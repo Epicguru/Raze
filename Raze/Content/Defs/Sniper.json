@@ -1,8 +1,0 @@
-{
-    "Name": "Sniper",
-    "Parent": "Soldier",
-    "Attack": 100,
-    "Range": 50,
-    "Abstract": true,
-    "Enemies": ["Long range target"]
-}

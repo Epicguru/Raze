@@ -7,6 +7,8 @@ namespace Raze.Defs.Contracts
     {
         public static readonly TypeConverter Instance = new TypeConverter();
 
+        private TypeConverter() { }
+
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             throw new NotImplementedException("Unnecessary because CanWrite is false. The type will skip the converter.");

@@ -155,6 +155,19 @@ namespace Raze.World
             return GetGroundPositionFromWorldPosition(flatWorldPos, out TileSide _);
         }
 
+        public Color GetMapTint(Tile tile)
+        {
+            var pos = tile.Position;
+            Color color = (pos.X + pos.Y) % 2 == 0 ? Color.White : Color.Lerp(Color.Black, Color.White, 0.95f);
+            color = color.LightShift(0.85f + 0.15f * ((tile.Position.Z + 1f) / Height));
+            if (tile.IsType("Water"))
+            {
+                //color = color.LightShift(0.45f + (perlin / WATER_HEIGHT) * 0.8f);
+            }
+
+            return color;
+        }
+
         public void Update()
         {
             // URGTODO implement me.

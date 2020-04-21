@@ -1,0 +1,22 @@
+[
+    {
+        "Name": "Sand",
+        "Parent": "Tile",
+        "Sprite": "Textures/Tiles/Sand"
+    },
+    {
+        "Name": "RedSand",
+        "Parent": "Sand",
+        "BaseTint": "255, 200, 200, 255"
+    },
+    {
+        "Name": "Grass",
+        "Parent": "Tile",
+        "Sprite": "Textures/Tiles/Grass"
+    },
+    {
+        "Name": "Water",
+        "Parent": "Liquid",
+        "BaseTint":"20, 200, 255, 240"
+    }
+]

@@ -1,13 +1,18 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System;
 using System.Reflection;
 
 namespace Raze.Defs.Contracts
 {
-    public class ContractResolver : DefaultContractResolver
+    public class RazeContractResolver : DefaultContractResolver
     {
-        public static readonly ContractResolver Instance = new ContractResolver();
+        public static readonly RazeContractResolver Instance = new RazeContractResolver();
+
+        private RazeContractResolver()
+        {
+
+        }
 
         protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
         {

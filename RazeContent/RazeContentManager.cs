@@ -98,7 +98,7 @@ namespace RazeContent
                 item.AbsolutePath = info.FullName;
                 item.LocalPath = info.FullName[fullPath.Length..];
 
-                Console.WriteLine($"{item.LocalPath}");
+                //Console.WriteLine($"{item.LocalPath}");
 
                 contentFiles.Add(item);
 
@@ -268,7 +268,10 @@ namespace RazeContent
                 throw new ArgumentException($"The loaded type, {obj.GetType().FullName} cannot be converted to requested type {typeof(T).FullName}!", nameof(T));
             }
 
-            Console.WriteLine($"Loaded '{path}' in {s.Elapsed.TotalMilliseconds:F1} ms.");
+            var old = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.WriteLine($"  -Loaded '{path}' in {s.Elapsed.TotalMilliseconds:F1} ms.");
+            Console.ForegroundColor = old;
 
             return converted;
         }

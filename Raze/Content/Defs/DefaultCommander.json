@@ -1,8 +1,0 @@
-{
-    "Name": "DefaultCommander",
-    "Parent": "Soldier",
-    "Class": "Raze.Defs.CommanderDef",
-    "Rank": 100,
-    "Position": "69, 105",
-    "CommanderClass": "Raze.Main"
-}

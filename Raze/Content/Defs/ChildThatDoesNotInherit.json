@@ -1,5 +1,0 @@
-{
-    "Name": "ChildThatDoesNotInherit",
-    "Parent": "Soldier",
-    "Class": "Raze.Defs.CarDef"
-}

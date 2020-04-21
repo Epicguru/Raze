@@ -1,17 +1,16 @@
-﻿using System;
-using Lidgren.Network;
+﻿using Lidgren.Network;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Raze.Entities;
 using Raze.Entities.Instances;
 using Raze.Networking;
-using Raze.Reflection;
 using Raze.World;
 using Raze.World.Generation;
-using Raze.World.Tiles;
 using Raze.World.Tiles.Components;
 using RazeUI;
+using RazeUI.Windows;
+using System;
 
 namespace Raze.Screens.Instances
 {
@@ -52,30 +51,13 @@ namespace Raze.Screens.Instances
         private void LoadGenericMode()
         {
             // Called to load regardless of whether it's host mode or remote mode.
-
-            // Load tiles, tileComps, entities, if they are not already loaded.
-            if(Tile.RegisteredCount == 0)
-            {
-                LoadingScreenText = "Loading object definitions...";
-                new ClassExtractor().ScanAll(
-                    t =>
-                    {
-                        // Tiles.
-                        Tile.Register(t);
-                    },
-                    t =>
-                    {
-                        // Tile components.
-                        TileComponent.Register(t);
-                    });
-            }
         }
 
         private void LoadHostMode()
         {
             // Create an instance of the isometric map.
             LoadingScreenText = "Creating map...";
-            Main.Map = new IsoMap(100, 100, 3);
+            Main.Map = new IsoMap(100, 100, 2);
 
             // Generate isometric map.
             LoadingScreenText = "Generating map...";
@@ -156,8 +138,7 @@ namespace Raze.Screens.Instances
             {
                 Debug.Error($"Failed to download all world chunk data in time ({MAX_TIME} ms). Downloaded {receivedChunks} of {expectedChunks}.");
                 Manager.ChangeScreen<MainMenuScreen>();
-                // URGTODO re-implement me.
-                //GeonBit.UI.Utils.MessageBox.ShowMsgBox("Download error", $"Failed to download all data chunks time ({receivedChunks}/{expectedChunks}). Connection is too slow or the server closed.");
+                new MessageBox("Download error", $"Failed to download all data chunks time ({receivedChunks}/{expectedChunks}). Connection is too slow or the server closed.").Show();
             }
         }
 
@@ -195,7 +176,7 @@ namespace Raze.Screens.Instances
                     continue;
 
                 int finalIndex = startIndex + i;
-                Tile newTile = Tile.CreateInstance(tileID);
+                Tile newTile = Tile.Create(tileID);
                 Main.Map.SetTileInternal(finalIndex, newTile);
 
                 // Deserialize tile data. Includes tile components.
@@ -314,8 +295,8 @@ namespace Raze.Screens.Instances
         private void GenerateMap()
         {
             var map = Main.Map;
-            Random r = new Random(50);
-            Noise n = new Noise(r.Next(0, 10000));
+            Rand.ReseedRandom();
+            Noise n = new Noise(Rand.Range(0, 10000));
 
             LoadingScreenText = "Generating map... Placing tiles...";
 
@@ -328,13 +309,12 @@ namespace Raze.Screens.Instances
                     {
                         const float SCALE = 0.035f;
                         Vector2 offset = new Vector2(500, 300);
-                        Color c = (x + y) % 2 == 0 ? Color.White : Color.Lerp(Color.Black, Color.White, 0.95f);
                         float perlin = n.GetPerlin(x * SCALE + offset.X, y * SCALE + offset.Y, z * SCALE);
                         bool place = z == 0 || perlin >= 0.7f;
 
                         // Prevent floating tiles.
                         var below = map.GetTile(x, y, z - 1);
-                        if (z != 0 && (below == null || below is WaterTile))
+                        if (z != 0 && (below == null || below.IsType("Water")))
                             place = false;
 
                         if (place)
@@ -344,23 +324,13 @@ namespace Raze.Screens.Instances
 
                             Tile t;
                             if (z == 0 && perlin < WATER_HEIGHT)
-                                t = new WaterTile();
+                                t = Tile.Create("Water");
                             else if (perlin < SAND_HEIGHT)
-                                t = new SandTile();
+                                t = Tile.Create(Rand.Chance(0.5f) ? "Sand" : "RedSand");
                             else
-                                t = new GrassTile();
+                                t = Tile.Create("Grass");
 
                             map.SetTileInternal(x, y, z, t);
-
-                            //if (t is WaterTile)
-                            //    c = Color.White;
-
-                            t.BaseSpriteTint = c.LightShift(0.85f + 0.15f * ((z + 1f) / map.Height));
-                            if (t is WaterTile)
-                            {
-                                t.BaseSpriteTint = t.BaseSpriteTint.Multiply(Color.DeepSkyBlue);
-                                t.BaseSpriteTint = t.BaseSpriteTint.LightShift(0.45f + (perlin / WATER_HEIGHT) * 0.8f);
-                            }
                         }
                     }
                 }
@@ -378,21 +348,21 @@ namespace Raze.Screens.Instances
                         Tile t = map.GetTile(x, y, z);
                         if (t == null)
                             continue;
-                        if (t is WaterTile || t is SandTile)
+                        if (t.IsType("Water") || t.IsType("Sand"))
                             continue;
 
                         Tile above = map.GetTile(x, y, z + 1);
                         if (above == null)
                         {
-                            if (r.NextDouble() < 0.1f)
+                            if (Rand.Chance(0.1f))
                             {
                                 t.AddComponent(new Mountain(), 0);
                             }
-                            else if (r.NextDouble() < 0.15f)
+                            else if (Rand.Chance(0.15f))
                             {
                                 t.AddComponent(new Trees(), 0);
                             }
-                            else if (r.NextDouble() < 0.02f)
+                            else if (Rand.Chance(0.05f))
                             {
                                 t.AddComponent(new House(), 0);
                             }

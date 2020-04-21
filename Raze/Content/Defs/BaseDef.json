@@ -1,5 +1,5 @@
 {
-    "Name": "Base",
+    "Name": "BaseDef",
     "Class": "Raze.Defs.Def",
     "Abstract": true
 }

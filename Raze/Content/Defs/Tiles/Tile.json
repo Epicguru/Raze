@@ -1,0 +1,7 @@
+{
+    "Name": "Tile",
+    "Class": "Raze.World.TileDef",
+    "TileClass": "Raze.World.BasicTile",
+    "BaseTint": "255, 255, 255, 255",
+    "Sprite": "Textures/Tiles/Grass"
+}

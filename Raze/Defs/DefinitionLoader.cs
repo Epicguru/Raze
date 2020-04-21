@@ -34,7 +34,15 @@ namespace Raze.Defs
             throw new Exception($"Failed to find type '{className}' in any of the {currentAssemblies.Count} loaded assemblies. The class name is case-senstive, so check spelling!", null);
         }
 
+        /// <summary>
+        /// Invoked whenever there is an error with the deserialization of a definition.
+        /// </summary>
         public event Action<string, Exception> OnError;
+        /// <summary>
+        /// If true, definitions that don't specify a <c>Parent</c> are assumed to have parent 'BaseDef'. If false, definitions that don't specify <c>Parent</c> will cause an error.
+        /// Default is true.
+        /// </summary>
+        public bool AssumeBaseDef { get; set; } = true;
 
         private List<DefinitionFile> rawDefinitions = new List<DefinitionFile>();
         private List<(DefinitionFile file, DefStub stub)> stubs = new List<(DefinitionFile, DefStub)>();
@@ -54,7 +62,16 @@ namespace Raze.Defs
             json.Formatting = Formatting.Indented;
             json.DefaultValueHandling = DefaultValueHandling.Ignore;
             json.NullValueHandling = NullValueHandling.Ignore;
-            json.ContractResolver = ContractResolver.Instance;
+            json.ContractResolver = RazeContractResolver.Instance;
+
+            json.Converters.Add(new ColorConverter());
+            json.Converters.Add(new SpriteConverter());
+
+            json.Converters.Add(new PointConverter());
+            json.Converters.Add(new Point3DConverter());
+
+            json.Converters.Add(new Vector2Converter());
+            json.Converters.Add(new Vector3Converter());
 
             RefreshAssemblies();
         }
@@ -136,11 +153,11 @@ namespace Raze.Defs
                     {
                         OnError?.Invoke($"Definition {txt.FilePath} has no name!", null);
                     }
-                    else if (string.IsNullOrWhiteSpace(ds.Parent) && ds.Class == null)
+                    else if (!AssumeBaseDef && string.IsNullOrWhiteSpace(ds.Parent) && ds.Class == null)
                     {
                         // If it doesn't have a parent then it must explicitly state the def class.
                         // Otherwise, the type of this definition is unknown.
-                        OnError?.Invoke($"Definition {ds.Name} ({txt.FilePath}) has no parent but does not state a class name. It must either have a parent, or have a class name.", null);
+                        OnError?.Invoke($"Definition {ds.Name} ({txt.FilePath}) has no parent. Set DefinitionLoader.AsumeBaseDef to true to assume that ommiting parent is equivalent to inheriting from BaseDef.", null);
                     }
                     else if (ds.Parent == ds.Name)
                     {
@@ -151,6 +168,9 @@ namespace Raze.Defs
                     {
                         if (!namedStubs.ContainsKey(ds.Name))
                         {
+                            if (string.IsNullOrWhiteSpace(ds.Parent) && ds.Name != "BaseDef")
+                                ds.Parent = "BaseDef";
+
                             ds._Json = pair.file.Json;
                             namedStubs.Add(ds.Name, ds);
                             stubs.Add((pair.file, ds));
@@ -232,6 +252,8 @@ namespace Raze.Defs
                     instance._InternalParent = stub._InternalParent;
                     instance.Name = pair.stub.Name;
                     worked = ConstructFromJson(instance);
+                    if(AssumeBaseDef)
+                        instance.Parent = stub.Parent; // Necessary because of default-def stuff.
                     instance._InternalParent = null;
                     instance._Json = null;
 

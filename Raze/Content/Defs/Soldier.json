@@ -1,9 +1,0 @@
-{
-    "Name": "Soldier",
-    "Parent": "Base",
-    "Class": "Raze.Defs.SoldierDef",
-    "Abstract": true,
-    "Attack": 25,
-    "Defense": 25,
-    "Enemies": ["Basic Target"]
-}

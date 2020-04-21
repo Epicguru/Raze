@@ -4,137 +4,193 @@ using System.Reflection;
 using Lidgren.Network;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Raze.Defs;
 using Raze.Sprites;
 
 namespace Raze.World
 {
-    public abstract class Tile
+    public abstract class Tile : IDefined<TileDef>
     {
-        public const bool DEBUG_MODE = true; // TODO remove-me for global mode, or use conditional compilation.
-
         #region Static stuff
 
-        public static int RegisteredCount
+        private static string[] idToDefName = new string[ushort.MaxValue + 1];
+        private static Dictionary<Type, Func<TileDef, Tile>> constructors = new Dictionary<Type, Func<TileDef, Tile>>();
+
+        public static void PostLoadDefs()
         {
-            get
+            Def rootDef = Main.DefDatabase.Get("Tile");
+            if (rootDef == null)
+                throw new Exception("Failed to find tile root def.");
+
+            var tileDefs = Main.DefDatabase.GetChildren(rootDef);
+
+            // TODO sort defs alphabetically to ensure that they are always in the same order and therefore have same ID.
+            ushort globalID = 0;
+
+            Debug.Trace($"There are {tileDefs.Count} tile defs loaded.");
+
+            constructors.Clear();
+            foreach (var d in tileDefs)
             {
-                return all.Count;
+                var def = d as TileDef;
+                Type definedType = def.TileClass;
+
+                if(definedType == null)
+                {
+                    Debug.Error($"Tile def {d.Name} is missing a tile class. Could it not be loaded?");
+                    continue;
+                }
+
+                var defType = def.GetType();
+
+                // Assign ID.
+                ushort id = ++globalID;
+                idToDefName[id] = def.Name;
+                def.TileID = id;
+
+                if (constructors.ContainsKey(defType))
+                {
+                    continue;
+                }
+
+                MethodInfo[] methods = defType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                MethodInfo customMethod = null;
+
+                foreach (var method in methods)
+                {
+                    if (method.GetCustomAttribute(typeof(DefinedProviderAttribute)) == null)
+                        continue;
+
+                    if (!definedType.IsAssignableFrom(method.ReturnType))
+                    {
+                        Debug.Error($"The DefinedProvider method '{method.DeclaringType.FullName}.{method.Name}' returns a {method.ReturnType.Name} which is not assignable to {definedType.Name}.");
+                        continue;
+                    }
+
+                    if (method.ContainsGenericParameters)
+                    {
+                        Debug.Error($"The DefinedProvider method '{method.DeclaringType.FullName}.{method.Name}' has a generic parameter which is not allowed.");
+                        continue;
+                    }
+
+                    if(method.GetParameters().Length != 1)
+                    {
+                        Debug.Error($"The DefinedProvider method '{method.DeclaringType.FullName}.{method.Name}' has {method.GetParameters().Length} parameters, but there should be exactly 1 of a type assignable from TileDef.");
+                        continue;
+                    }
+
+                    if (!method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(TileDef)))
+                    {
+                        Debug.Error($"The DefinedProvider method '{method.DeclaringType.FullName}.{method.Name}' has a parameter of type {method.GetParameters()[0].ParameterType.Name} which is not assignable from TileDef and is therefore invalid.");
+                        continue;
+                    }
+
+                    customMethod = method;
+                    break;
+                }
+
+                if (customMethod != null)
+                {
+                    constructors.Add(defType, (inDef) => (Tile)customMethod.Invoke(null, new object[]{inDef}));
+                }
+                else
+                {
+                    var allInClass = def.TileClass.GetConstructors(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    ConstructorInfo found = null;
+                    foreach (var con in allInClass)
+                    {
+                        var param = con.GetParameters();
+                        if (param.Length != 1)
+                            continue;
+
+                        if (param[0].ParameterType.IsAssignableFrom(typeof(TileDef)))
+                        {
+                            found = con;
+                            break;
+                        }
+                    }
+
+                    if (found == null)
+                    {
+
+                        Debug.Error($"Tile definition {def.Name} has {def.TileClass.Name} as defined class, but the defined class has no public or private one-argument constructor and the {def.Class.Name} class has no DefinedProvider method.");
+                    }
+                    else
+                    {
+                        constructors.Add(defType, (inDef) => (Tile)found.Invoke(new object[]{inDef}));
+                    }
+                }
             }
+
+            Debug.Trace($"Created or found {constructors.Count} of {tileDefs.Count} constructors.");
         }
 
-        private static readonly List<ConstructorInfo> tileCreators = new List<ConstructorInfo>();
-        private static readonly Dictionary<Type, ushort> type2ID = new Dictionary<Type, ushort>();
-        private static readonly List<Type> all = new List<Type>();
-        private static readonly object[] noArgs = new object[0];
-
-        public static ushort Register<T>() where T : Tile
+        public static Tile Create(ushort id)
         {
-            return Register(typeof(T));
+            return Create(idToDefName[id]);
         }
 
-        public static ushort Register(Type t)
+        public static Tile Create(string defName)
         {
-            if(t == null)
+            if (defName == null)
             {
-                Debug.Error("Cannot register null tile type.");
-                return 0;
-            }
-            string name = t.FullName;
-            if (!typeof(Tile).IsAssignableFrom(t))
-            {
-                Debug.Error($"Type {name} does not inherit from Tile, so you can't register it as a tile!");
-                return 0;
-            }
-            if (type2ID.ContainsKey(t))
-            {
-                Debug.Error($"{name} is already registered!");
-                return 0;
-            }
-
-            // Look for zero arg public constructor.
-            var creator = t.GetConstructor(new Type[] { });
-            if (creator == null)
-            {
-                Debug.Error($"Tile {name} does not have a zero-argument public constructor. It needs one to be able to load and save correctly.");
-                return 0;
-            }
-
-            ushort id = (ushort)(type2ID.Count + 1);
-
-            type2ID.Add(t, id);
-            tileCreators.Add(creator);
-            all.Add(t);
-
-            return id;
-        }
-
-        public static Type GetTileType(ushort id)
-        {
-            if (id == 0)
+                Debug.Warn("Null def name passed into Create!");
                 return null;
+            }
 
-            int index = id - 1;
-            if (all.Count == 0 || index >= all.Count)
+            if (Main.DefDatabase.Get(defName) is TileDef def)
+                return Create(def);
+
+            Debug.Warn($"Failed to find tile def for name {defName}");
+            return null;
+        }
+
+        public static Tile Create(TileDef def)
+        {
+            if (def == null)
             {
-                Debug.Warn($"Failed to get type of tile for ID {id}: ID out of bounds. Have all tiles been registered yet?");
+                Debug.Warn("TileDef passed into Create is null. Perhaps the def is not loaded?");
                 return null;
             }
 
-            return all[index];
-        }
-
-        public static Tile CreateInstance(ushort id)
-        {
-            if (id == 0)
-                return null;
-
-            int index = id - 1;
-            if(all.Count == 0 || index >= all.Count)
+            if (constructors.TryGetValue(def.GetType(), out var f))
             {
-                Debug.Warn($"Failed to create tile instance for ID {id}: ID out of bounds. Have all tiles been registered yet?");
-                return null;
+                var created = f.Invoke(def);
+                created?.ApplyDef(def);
+                return created;
             }
-
-            Tile instance = tileCreators[index].Invoke(noArgs) as Tile;
-
-            return instance;
-        }
-
-        public static ushort GetID(Type t)
-        {
-            if (t == null)
-                return 0;
-
-            return type2ID.ContainsKey(t) ? type2ID[t] : (ushort)0;
+            return null;
         }
 
         #endregion
 
         public static Color ShadowColor = Color.Black.AlphaShift(0.5f);
 
-        public ushort ID { get; internal set; }
+        public ushort ID
+        {
+            get
+            {
+                return Def.TileID;
+            }
+        }
         public string Name
         {
             get
             {
-                return name;
-            }
-            set
-            {
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    Debug.Warn($"Cannot set tile name to null or blank. ({this})");
-                    return;
-                }
-
-                name = value;
+                return Def.Name;
             }
         }
+
         /// <summary>
         /// The sprite that is rendered as the 'base': as the ground. If null, nothing is drawn apart from
         ///  the components.
         /// </summary>
-        public Sprite BaseSprite { get; protected internal set; }
+        public Sprite BaseSprite
+        {
+            get;
+            set;
+        }
+
         /// <summary>
         /// The 'permanent' tint that the ground is drawn with. This ONLY affects the ground sprite, not the components.
         /// </summary>
@@ -162,12 +218,24 @@ namespace Raze.World
         }
         public Vector2 DrawPosition { get; protected set; }
 
-        private string name = "No-name";
+        public TileDef Def { get; }
+
         private readonly TileComponent[] components = new TileComponent[8];
 
-        protected Tile()
+        protected Tile(TileDef def)
         {
-            ID = Tile.GetID(GetType());
+            Def = def ?? throw new ArgumentNullException(nameof(def));
+        }
+
+        public virtual void ApplyDef(TileDef def)
+        {
+            BaseSprite = def.Sprite;
+            BaseSpriteTint = def.BaseTint;
+        }
+
+        public bool IsType(string defName)
+        {
+            return Def.Name == defName;
         }
 
         public float GetDrawDepth()
@@ -201,6 +269,8 @@ namespace Raze.World
             if(BaseSprite != null)
             {
                 Color c = BaseSpriteTint.Multiply(TemporarySpriteTint);
+                c = c.Multiply(Map.GetMapTint(this));
+
                 spr.Draw(BaseSprite, DrawPosition, c, GetDrawDepth());
                 TemporarySpriteTint = Color.White;
 
