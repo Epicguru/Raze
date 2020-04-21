@@ -50,6 +50,8 @@ namespace Raze.Defs
         private Dictionary<string, DefStub> namedStubs = new Dictionary<string, DefStub>();
         private Dictionary<Type, ConstructorInfo> cachedConstructors = new Dictionary<Type, ConstructorInfo>();
         private List<DefStub> tempDefs = new List<DefStub>();
+        private List<Def> returnDefs = new List<Def>();
+        private List<DefStub> returnAbs = new List<DefStub>();
 
         private JsonSerializer json;
         private object[] noArgs = new object[0];
@@ -97,13 +99,15 @@ namespace Raze.Defs
         /// definition inheritance. Any errors that occur when loading will go through <see cref="OnError"/>.
         /// </summary>
         /// <returns>The list of definitions.</returns>
-        public Def[] ProcessAll()
+        public (Def[] defs, DefStub[] abs) ProcessAll()
         {
             if (rawDefinitions.Count == 0)
-                return new Def[0];
+                return (new Def[0], new DefStub[0]);
             
             ProcessRawToStub();
-            return ProcessStubs().ToArray();
+            ProcessStubs(out var defs, out var abs);
+
+            return (defs, abs);
         }
 
         private void ProcessRawToStub()
@@ -211,65 +215,74 @@ namespace Raze.Defs
             }
         }
 
-        private IEnumerable<Def> ProcessStubs()
+        private void ProcessStubs(out Def[] defs, out DefStub[] abstracts)
         {
+            returnDefs.Clear();
+            returnAbs.Clear();
             foreach (var pair in stubs)
             {
-                if (!pair.stub._IsAbstract) // Needs to have it's own inheritance tree.
+                var stub = pair.stub;
+
+                // Abstract stubs get no processing - they are not meant to be used at all from real code.
+                // They just serve as a logical link and a design tool.
+                if (stub._IsAbstract)
                 {
-                    var stub = pair.stub;
-                    bool worked = FindAndSetParent(stub);
-                    if (!worked)
-                        continue; // Error has already been reported.
+                    returnAbs.Add(stub);
+                    continue;
+                }
 
-                    Type type = null;
-                    DefStub current = stub;
-                    while(current != null)
+                bool worked = FindAndSetParent(stub);
+                if (!worked)
+                    continue; // Error has already been reported.
+
+                Type type = null;
+                DefStub current = stub;
+                while (current != null)
+                {
+                    if (current.Class != null)
                     {
-                        if (current.Class != null)
-                        {
-                            type = current.Class;
-                            break;
-                        }
-
-                        current = current._InternalParent;
+                        type = current.Class;
+                        break;
                     }
 
-                    if (type.IsAbstract)
+                    current = current._InternalParent;
+                }
+
+                if (type.IsAbstract)
+                {
+                    OnError?.Invoke($"{stub.Name}'s class {type.Name} is abstract: this is not valid. Either change the C# class or review your json structure.", null);
+                    continue;
+                }
+
+                Def instance = CreateInstance(type, stub.Name);
+                if (instance == null)
+                    continue; // Error has already been reported.
+
+                instance.FilePath = pair.file.FilePath;
+
+                // Actually read all values from all json stubs associated with this definition.
+                instance._Json = pair.file.Json;
+                instance._InternalParent = stub._InternalParent;
+                instance.Name = pair.stub.Name;
+                worked = ConstructFromJson(instance);
+                if (AssumeBaseDef)
+                    instance.Parent = stub.Parent; // Necessary because of default-def stuff.
+                instance._IsAbstract = false;
+                instance._InternalParent = null;
+                instance._Json = null;
+
+                if (worked)
+                {
+                    bool hasAdditionalData = instance.AdditionalData != null && instance.AdditionalData.Count > 0;
+                    bool allowAdditionalData = instance.AllowAdditionalData;
+
+                    if (hasAdditionalData && !allowAdditionalData)
                     {
-                        OnError?.Invoke($"{stub.Name}'s class {type.Name} is abstract: this is not valid. Either change the C# class or review your json structure.", null);
-                        continue;
+                        OnError?.Invoke($"Def {instance.Name} has {instance.AdditionalData.Count} items of additional data, but it does not have \"AllowAdditionalData\" = true. If this is not a mistake, it is most likely cause by incorrect stub/class inheritance.", null);
                     }
-
-                    Def instance = CreateInstance(type, stub.Name);
-                    if (instance == null)
-                        continue; // Error has already been reported.
-
-                    instance.FilePath = pair.file.FilePath;
-
-                    // Actually read all values from all json stubs associated with this definition.
-                    instance._Json = pair.file.Json;
-                    instance._InternalParent = stub._InternalParent;
-                    instance.Name = pair.stub.Name;
-                    worked = ConstructFromJson(instance);
-                    if(AssumeBaseDef)
-                        instance.Parent = stub.Parent; // Necessary because of default-def stuff.
-                    instance._InternalParent = null;
-                    instance._Json = null;
-
-                    if (worked)
+                    else
                     {
-                        bool hasAdditionalData = instance.AdditionalData != null && instance.AdditionalData.Count > 0;
-                        bool allowAdditionalData = instance.AllowAdditionalData;
-
-                        if (hasAdditionalData && !allowAdditionalData)
-                        {
-                            OnError?.Invoke($"Def {instance.Name} has {instance.AdditionalData.Count} items of additional data, but it does not have \"AllowAdditionalData\" = true. If this is not a mistake, it is most likely cause by incorrect stub/class inheritance.", null);
-                        }
-                        else
-                        {
-                            yield return instance;
-                        }
+                        returnDefs.Add(instance);
                     }
                 }
             }
@@ -283,6 +296,11 @@ namespace Raze.Defs
             }
             stubs.Clear();
             namedStubs.Clear();
+
+            defs = returnDefs.ToArray();
+            returnDefs.Clear();
+            abstracts = returnAbs.ToArray();
+            returnAbs.Clear();
         }
 
         private bool ConstructFromJson(DefStub def)

@@ -19,6 +19,9 @@ namespace Raze.Defs
         [JsonExtensionData]
         public IDictionary<string, JToken> AdditionalData { get; set; }
 
+        [JsonIgnore]
+        public ushort DefID { get; internal set; }
+
         public virtual JToken TryGetAdditionalData(string key)
         {
             if (AdditionalData == null)

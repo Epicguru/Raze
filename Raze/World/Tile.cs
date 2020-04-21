@@ -13,7 +13,6 @@ namespace Raze.World
     {
         #region Static stuff
 
-        private static string[] idToDefName = new string[ushort.MaxValue + 1];
         private static Dictionary<Type, Func<TileDef, Tile>> constructors = new Dictionary<Type, Func<TileDef, Tile>>();
 
         public static void PostLoadDefs()
@@ -22,10 +21,7 @@ namespace Raze.World
             if (rootDef == null)
                 throw new Exception("Failed to find tile root def.");
 
-            var tileDefs = Main.DefDatabase.GetChildren(rootDef);
-
-            // TODO sort defs alphabetically to ensure that they are always in the same order and therefore have same ID.
-            ushort globalID = 0;
+            var tileDefs = Main.DefDatabase.GetChildren(rootDef, true);
 
             Debug.Trace($"There are {tileDefs.Count} tile defs loaded.");
 
@@ -42,11 +38,6 @@ namespace Raze.World
                 }
 
                 var defType = def.GetType();
-
-                // Assign ID.
-                ushort id = ++globalID;
-                idToDefName[id] = def.Name;
-                def.TileID = id;
 
                 if (constructors.ContainsKey(defType))
                 {
@@ -127,7 +118,7 @@ namespace Raze.World
 
         public static Tile Create(ushort id)
         {
-            return Create(idToDefName[id]);
+            return Create(Main.DefDatabase.Get(id)?.Name);
         }
 
         public static Tile Create(string defName)
@@ -170,7 +161,7 @@ namespace Raze.World
         {
             get
             {
-                return Def.TileID;
+                return Def.DefID;
             }
         }
         public string Name

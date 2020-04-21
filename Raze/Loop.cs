@@ -97,7 +97,7 @@ namespace Raze
             Debug.Text($"Sprites Drawn: {Loop.FrameStats.DrawMetrics.SpriteCount}");
             Debug.Text($"Total Entities: {Entity.SpawnedCount}.");
             Debug.Text($"Net - Client: {Net.Client?.ConnectionStatus.ToString() ?? "null"}, Server: {Net.Server?.Status.ToString() ?? "null"}");
-            Debug.Text($"Under mouse: {(Input.TileUnderMouse == null ? "null" : Input.TileUnderMouse.Position + " - " + Input.TileUnderMouse.Name)}");
+            Debug.Text($"Under mouse: {(Input.TileUnderMouse == null ? "null" : Input.TileUnderMouse.Position + " - " + Input.TileUnderMouse.Name + " " + Input.TileUnderMouse.ID)}");
 
             Input.EndFrame();
 

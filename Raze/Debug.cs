@@ -410,8 +410,9 @@ namespace Raze
 
             if(level != LogLevel.TRACE || (LogEnableTrace))
             {
-                if (Console.ForegroundColor != colour)
-                    Console.ForegroundColor = colour;
+                var old = Console.ForegroundColor;
+                var old2 = Console.BackgroundColor;
+                Console.ForegroundColor = colour;
                 if (Highlight)
                 {
                     switch (level)
@@ -433,7 +434,8 @@ namespace Raze
                 }
 
                 Console.WriteLine(textBuilder.ToString());
-                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = old;
+                Console.BackgroundColor = old2;
             }
 
             logEntries.Add(stringBuilder.ToString());
@@ -449,8 +451,10 @@ namespace Raze
                 string fullPath = interesting.Substring(interesting.LastIndexOf(')'));
                 fullPath = fullPath.Substring(fullPath.LastIndexOf('\\') + 1);
 
+                var old = Console.ForegroundColor;
                 Console.ForegroundColor = ConsoleColor.DarkCyan;
                 Console.WriteLine($"   from [{methodName.Trim()} -> {fullPath.Trim()}]");
+                Console.ForegroundColor = old;
             }            
         }
 

@@ -24,9 +24,15 @@ namespace Raze.Defs
         }
 
         private List<Def> allDefs;
+        private List<DefStub> allAbsDefs;
+        private Def[] idToDef = new Def[ushort.MaxValue + 1];
         private Dictionary<string, Def> namedDefs;
-        private Dictionary<Def, List<Def>> childrenMap;
+        private Dictionary<string, DefStub> namedAbs;
+        private Dictionary<DefStub, (List<Def> real, List<DefStub> abs)> childrenMap;
         private readonly Def[] emptyDefArray = new Def[0];
+        private Queue<DefStub> openNodes = new Queue<DefStub>();
+        private List<Def> tempDefs = new List<Def>();
+        private ushort currentID;
 
         public DefDatabase()
         {
@@ -37,8 +43,10 @@ namespace Raze.Defs
             };
 
             allDefs = new List<Def>();
+            allAbsDefs = new List<DefStub>();
             namedDefs = new Dictionary<string, Def>();
-            childrenMap = new Dictionary<Def, List<Def>>();
+            namedAbs = new Dictionary<string, DefStub>();
+            childrenMap = new Dictionary<DefStub, (List<Def> real, List<DefStub> abs)>();
         }
 
         /// <summary>
@@ -153,6 +161,7 @@ namespace Raze.Defs
 
         /// <summary>
         /// Gets a definition given it's name. Will return null with no error logged if not found. Case-sensitive and whitespace included.
+        /// Note that this will NOT return definitions marked as abstract.
         /// </summary>
         /// <param name="name">The name of the definition, as specified in file.</param>
         /// <returns>The definition or null.</returns>
@@ -162,17 +171,85 @@ namespace Raze.Defs
         }
 
         /// <summary>
-        /// Gets a list of the children of any given definition. Will not return null even if the definition has no children.
+        /// Gets a definition given it's id. Will return null with no error logged if not found.
+        /// Note that this will NOT return definitions marked as abstract.
+        /// </summary>
+        /// <param name="id">The id of the definition, as assigned at runtime.</param>
+        /// <returns>The definition or null.</returns>
+        public Def Get(ushort id)
+        {
+            return idToDef[id];
+        }
+
+        private DefStub GetAbs(string name)
+        {
+            return namedAbs.TryGetValue(name, out DefStub d) ? d : null;
+        }
+
+        public IReadOnlyList<Def> GetChildren(string defName, bool recursive)
+        {
+            var realDef = Get(defName);
+            if (realDef != null)
+                return GetChildren(realDef, recursive);
+
+            var absDef = GetAbs(defName);
+            if (absDef != null)
+                return GetChildren(absDef, recursive);
+
+            Debug.Error($"Failed to find real or abstract def for name {defName}");
+            return null;
+        }
+
+        /// <summary>
+        /// Gets a list of the children of any given definition.
         /// Only returns children that were loaded using this database.
         /// </summary>
         /// <param name="def">The definition to get the children of.</param>
+        /// <param name="recursive">If true, all children, and all children's children etc. will be returned. If false, only immediate children are returned.</param>
         /// <returns>A list of children, or an empty list if it has no children.</returns>
-        public IReadOnlyList<Def> GetChildren(Def def)
+        public IReadOnlyList<Def> GetChildren(DefStub def, bool recursive)
         {
-            if (childrenMap.ContainsKey(def))
-                return childrenMap[def];
-            
-            return emptyDefArray;
+            if (def == null)
+            {
+                Debug.Error("Null def passed into GetChilren");
+                return null;
+            }
+
+            if (!recursive)
+            {
+                if (childrenMap.ContainsKey(def))
+                    return childrenMap[def].real;
+                return emptyDefArray;
+            }
+            else
+            {
+                openNodes.Clear();
+                tempDefs.Clear();
+
+                openNodes.Enqueue(def);
+                while(openNodes.Count > 0)
+                {
+                    var current = openNodes.Dequeue();
+
+                    if (current != def && !current._IsAbstract)
+                        tempDefs.Add(current as Def);
+
+                    if(childrenMap.TryGetValue(current, out var pair))
+                    {
+                        foreach (var child in pair.real)
+                        {
+                            openNodes.Enqueue(child);
+                        }
+                        foreach (var child in pair.abs)
+                        {
+                            openNodes.Enqueue(child);
+                        }
+                    }
+                    
+                }
+
+                return tempDefs;
+            }
         }
 
         /// <summary>
@@ -182,12 +259,17 @@ namespace Raze.Defs
         public void Load()
         {
             var loaded = Loader.ProcessAll();
-            if (loaded == null)
-                return;
 
-            foreach (var def in loaded)
+            foreach (var def in loaded.defs)
             {
+                Console.WriteLine(" DEF > " + def);
                 Add(def);
+            }
+
+            foreach (var def in loaded.abs)
+            {
+                Console.WriteLine(" ABS > " + def);
+                AddAbs(def);
             }
 
             RebuildChildrenMap();
@@ -201,8 +283,22 @@ namespace Raze.Defs
                 return;
             }
 
+            def.DefID = ++currentID;
+            idToDef[def.DefID] = def;
             allDefs.Add(def);
             namedDefs.Add(def.Name, def);
+        }
+
+        private void AddAbs(DefStub def)
+        {
+            if (namedAbs.ContainsKey(def.Name))
+            {
+                Debug.Warn($"Duplicate abstract def loaded: {def.Name}.");
+                return;
+            }
+
+            allAbsDefs.Add(def);
+            namedAbs.Add(def.Name, def);
         }
 
         private void RebuildChildrenMap()
@@ -213,32 +309,74 @@ namespace Raze.Defs
                 if (string.IsNullOrWhiteSpace(def.Parent))
                     continue;
 
-                Def parent = Get(def.Parent);
+                DefStub parent = Get(def.Parent) ?? GetAbs(def.Parent);
+
                 if (parent != null)
                 {
-                    AddChild(parent, def);
+                    AddRealChild(parent, def);
+                }
+            }
+            foreach (var def in allAbsDefs)
+            {
+                if (string.IsNullOrWhiteSpace(def.Parent))
+                    continue;
+
+                DefStub parent = Get(def.Parent) ?? GetAbs(def.Parent);
+
+                if (parent != null)
+                {
+                    AddAbsChild(parent, def);
                 }
             }
 
-            void AddChild(Def parent, Def child)
+            void AddRealChild(DefStub parent, Def child)
             {
                 if (childrenMap.ContainsKey(parent))
                 {
-                    childrenMap[parent].Add(child);
+                    childrenMap[parent].real.Add(child);
                 }
                 else
                 {
-                    var list = new List<Def>();
-                    list.Add(child);
-                    childrenMap.Add(parent, list);
+                    var real = new List<Def>();
+                    var abs = new List<DefStub>();
+                    real.Add(child);
+                    childrenMap.Add(parent, (real, abs));
+                }
+            }
+            void AddAbsChild(DefStub parent, DefStub child)
+            {
+                if (childrenMap.ContainsKey(parent))
+                {
+                    childrenMap[parent].abs.Add(child);
+                }
+                else
+                {
+                    var real = new List<Def>();
+                    var abs = new List<DefStub>();
+                    abs.Add(child);
+
+                    childrenMap.Add(parent, (real, abs));
                 }
             }
         }
 
         public void Dispose()
         {
+            idToDef = null;
             namedDefs?.Clear();
             namedDefs = null;
+            tempDefs?.Clear();
+            tempDefs = null;
+            openNodes?.Clear();
+            openNodes = null;
+            childrenMap?.Clear();
+            childrenMap = null;
+            namedAbs?.Clear();
+            namedAbs = null;
+            allAbsDefs?.Clear();
+            allAbsDefs = null;
+            allDefs?.Clear();
+            allDefs = null;
             Loader?.Dispose();
             Loader = null;
         }
