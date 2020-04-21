@@ -309,37 +309,37 @@ namespace Raze.World
 
         public bool CanAddComponent(TileComponent tc, int index)
         {
-            return CanAddComponent(tc, index, out int _);
+            return CanAddComponent(tc, index, out string _);
         }
 
-        public bool CanAddComponent(TileComponent tc, int index, out int errorCode)
+        public bool CanAddComponent(TileComponent tc, int index, out string error)
         {
-            if (index < 0 || index >= components.Length)
-            {
-                // Index out of bounds!
-                errorCode = 0;
-                return false;
-            }
             if (tc == null)
             {
                 // Null component!
-                errorCode = 1;
+                error = "Null component.";
+                return false;
+            }
+            if (index < 0 || index >= components.Length)
+            {
+                // Index out of bounds!
+                error = $"Index out of bounds: got {index}, expected between 0 and {components.Length - 1} inclusive.";
                 return false;
             }
             if (tc.Tile != null)
             {
                 // Component already has parent!
-                errorCode = 2;
+                error = $"Component {tc} already has a parent tile.";
                 return false;
             }
             if (components[index] != null)
             {
                 // Component slot is not empty! (slot is already occupied)
-                errorCode = 3;
+                error = $"There is already a component in slot {index}.";
                 return false;
             }
 
-            errorCode = -1;
+            error = null;
             return true;
         }
 
@@ -349,8 +349,8 @@ namespace Raze.World
             if (!canAdd)
             {
                 Debug.Error($"Cannot add component {tc} to tile {this} at index {index}!");
-                CanAddComponent(tc, index, out int code);
-                Debug.Error($"Error code: {code}");
+                CanAddComponent(tc, index, out string code);
+                Debug.Error($"Error: {code}");
                 
                 return false;
             }
