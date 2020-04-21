@@ -27,6 +27,27 @@ namespace Raze.Defs
             return AdditionalData.ContainsKey(key) ? AdditionalData[key] : null;
         }
 
+        public virtual bool IsChildOf(string name)
+        {
+            if (name == null)
+                return false;
+
+            Def current = this;
+            while (true)
+            {
+                if (current == null)
+                    return false;
+
+                if (current.Name == name)
+                    return true;
+
+                if (current.Parent == null)
+                    return false;
+
+                current = Main.DefDatabase.Get(current.Parent);
+            }
+        }
+
         public override string ToString()
         {
             return $"[{GetType().Name}] {Name}, parent: {Parent ?? "none"}, file: {new FileInfo(FilePath).Name}, {AdditionalData?.Count ?? 0} additional data items";

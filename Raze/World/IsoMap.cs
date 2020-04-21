@@ -2,6 +2,7 @@
 using Lidgren.Network;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Raze.Defs;
 using Raze.Networking;
 
 namespace Raze.World
@@ -160,10 +161,8 @@ namespace Raze.World
             var pos = tile.Position;
             Color color = (pos.X + pos.Y) % 2 == 0 ? Color.White : Color.Lerp(Color.Black, Color.White, 0.95f);
             color = color.LightShift(0.85f + 0.15f * ((tile.Position.Z + 1f) / Height));
-            if (tile.IsType("Water"))
-            {
-                //color = color.LightShift(0.45f + (perlin / WATER_HEIGHT) * 0.8f);
-            }
+            
+            // URGTODO re-implement water color given perlin noise map.
 
             return color;
         }

@@ -9,7 +9,7 @@ using Raze.Sprites;
 
 namespace Raze.World
 {
-    public abstract class Tile : IDefined<TileDef>
+    public abstract class Tile : Defined<TileDef>
     {
         #region Static stuff
 
@@ -218,8 +218,6 @@ namespace Raze.World
         }
         public Vector2 DrawPosition { get; protected set; }
 
-        public TileDef Def { get; }
-
         private readonly TileComponent[] components = new TileComponent[8];
 
         protected Tile(TileDef def)
@@ -227,15 +225,10 @@ namespace Raze.World
             Def = def ?? throw new ArgumentNullException(nameof(def));
         }
 
-        public virtual void ApplyDef(TileDef def)
+        public override void ApplyDef(TileDef def)
         {
             BaseSprite = def.Sprite;
             BaseSpriteTint = def.BaseTint;
-        }
-
-        public bool IsType(string defName)
-        {
-            return Def.Name == defName;
         }
 
         public float GetDrawDepth()
