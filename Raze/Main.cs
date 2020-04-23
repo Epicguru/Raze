@@ -13,6 +13,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Raze.Entities;
+using Raze.World.Tiles;
+using Raze.World.Tiles.Components;
 
 // Allow GVS Tests to access 'internal' methods, fields etc.
 [assembly: InternalsVisibleTo("GVS_Tests")]
@@ -133,7 +136,7 @@ namespace Raze
             LoadingIconSprite.Pivot = new Vector2(0.5f, 0.5f);
 
             // Create the main sprite atlas.
-            SpriteAtlas = new SpriteAtlas(1024, 1024);
+            SpriteAtlas = new SpriteAtlas(2048, 2048);
 
             // Loading missing texture sprite.
             MissingTextureSprite = SpriteAtlas.Add("Textures/MissingTexture");
@@ -160,7 +163,15 @@ namespace Raze
 
             // Tile loading from defs.
             Debug.StartTimer("Tile def load");
-            Tile.PostLoadDefs();
+            DefFactory<Tile, TileDef>.Init("Tile");
+            Debug.StopTimer(true);
+
+            Debug.StartTimer("Tile comp def load");
+            DefFactory<TileComponent, TileCompDef>.Init("TileComp");
+            Debug.StopTimer(true);
+
+            Debug.StartTimer("Entity comp def load");
+            DefFactory<Entity, EntityDef>.Init("Entity");
             Debug.StopTimer(true);
 
             SpriteAtlas.Pack(false);

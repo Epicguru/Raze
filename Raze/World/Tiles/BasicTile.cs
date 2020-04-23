@@ -1,4 +1,4 @@
-﻿namespace Raze.World
+﻿namespace Raze.World.Tiles
 {
     /// <summary>
     /// Default implementation of the Tile class.

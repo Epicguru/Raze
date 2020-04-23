@@ -1,15 +1,31 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Raze.Defs;
 using Raze.Sprites;
 using Raze.World;
 using RazeUI;
 
 namespace Raze.Entities
 {
-    public abstract class Entity
+    public abstract class Entity : Defined<EntityDef>
     {
         #region Static
+
+        public static Entity Create(EntityDef def)
+        {
+            return DefFactory<Entity, EntityDef>.Create(def);
+        }
+
+        public static Entity Create(ushort id)
+        {
+            return DefFactory<Entity, EntityDef>.Create(id);
+        }
+
+        public static Entity Create(string defName)
+        {
+            return DefFactory<Entity, EntityDef>.Create(defName);
+        }
 
         public static int SpawnedCount
         {
@@ -50,7 +66,6 @@ namespace Raze.Entities
                 if(entity != null && !entity.IsDestroyed && entity.internalState == 1)
                 {
                     entity.internalState = 2;
-                    entity.Map = Main.Map;
                     activeEntities.Add(entity);
 
                     // Give it the spawn message.
@@ -60,7 +75,6 @@ namespace Raze.Entities
                 {
                     entity.IsDestroyed = true;
                     entity.internalState = 3;
-                    entity.Map = null;
                     // Don't give it the destroyed message because it was never spawned.
                 }
             }
@@ -75,7 +89,6 @@ namespace Raze.Entities
                     // Give despawn message, then set state.
                     entity.UponDestroyed();
                     entity.internalState = 3;
-                    entity.Map = null;
 
                     activeEntities.RemoveAt(i);
                     i--;
@@ -113,10 +126,19 @@ namespace Raze.Entities
 
         #endregion
 
-        public string Name { get; protected set; } = "No-name";
-        public IsoMap Map { get; internal set; }
-        public Vector3 Position;
-        public bool IsDestroyed { get; private set; } = false;
+        public string Name { get; set; }
+        public IsoMap Map
+        {
+            get
+            {
+                return Main.Map;
+            }
+        }
+        public virtual Vector3 Position { get; set; }
+        public bool IsDestroyed { get; private set; }
+        public Sprite[] Sprites { get; set; }
+        public Color SpriteTint { get; set; } = Color.White;
+        public CardinalDirection Direction { get; set; } = CardinalDirection.North;
 
         /// <summary>
         /// The internal state of the entity, related to how it is registered, updated and removed from the world.
@@ -127,6 +149,24 @@ namespace Raze.Entities
         /// </summary>
         private byte internalState = 0;
 
+        protected Entity(EntityDef def) : base(def)
+        {
+           
+        }
+
+        public override void ApplyDef(EntityDef def)
+        {
+            this.Sprites = def.Sprites;
+            foreach (var sprite in Sprites)
+            {
+                if (sprite != null)
+                    sprite.Pivot = new Vector2(0f, 0f);
+            }
+            this.SpriteTint = def.SpriteTint;
+            this.Name = def.Name;
+            this.Direction = def.SpawnDirection;
+        }
+
         ~Entity()
         {
             // If the entity is garbage collected and still has state 0, it is probably an oversight from the developer
@@ -135,6 +175,17 @@ namespace Raze.Entities
             {
                 Debug.Warn($"Entity {this} was garbage collected in state 0. Did you forget to call Activate()?");
             }
+        }
+
+        public Sprite GetSprite(CardinalDirection direction)
+        {
+            if (Sprites == null || Sprites.Length == 0)
+                return null;
+            if (Sprites.Length == 1)
+                return Sprites[0];
+
+            int index = (int) direction;
+            return Sprites.Length > index ? Sprites[index] : null;
         }
 
         /// <summary>
@@ -233,11 +284,11 @@ namespace Raze.Entities
             if (Map == null)
                 return Vector2.Zero;
 
-            Vector2 pos = Map.GetTileDrawPosition(this.Position);
+            Vector2 pos = Map.GetTileDrawPosition(this.Position + new Point3D(0, 0, 1));
 
             // Add on the offset to place at center of tile surface that corresponds to current position.
-            pos.X += IsoMap.TILE_SIZE * 0.5f;
-            pos.Y += IsoMap.TILE_SIZE * 0.25f;
+            //pos.X -= IsoMap.TILE_SIZE * 0.5f;
+            //pos.Y -= IsoMap.TILE_SIZE * 0.5f;
 
             return pos;
         }

@@ -15,6 +15,7 @@ namespace Raze.Defs
     {
         [NonSerialized]
         public string FilePath;
+        public Type RealClass;
 
         [JsonExtensionData]
         public IDictionary<string, JToken> AdditionalData { get; set; }

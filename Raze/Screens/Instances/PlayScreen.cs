@@ -7,6 +7,7 @@ using Raze.Entities.Instances;
 using Raze.Networking;
 using Raze.World;
 using Raze.World.Generation;
+using Raze.World.Tiles;
 using Raze.World.Tiles.Components;
 using RazeUI;
 using RazeUI.Windows;
@@ -210,9 +211,8 @@ namespace Raze.Screens.Instances
                 Tile underMouse = Input.TileUnderMouse;
                 if (underMouse != null)
                 {
-                    var spawned = new DevTroop();
-                    spawned.Position = underMouse.Position;
-
+                    var spawned = Entity.Create("DevTroop") as MovingEntity;
+                    spawned.TeleportTo(underMouse.Position);
                     spawned.Activate();
                 }
             }
@@ -238,6 +238,8 @@ namespace Raze.Screens.Instances
         public override void DrawUI(SpriteBatch sb, LayoutUserInterface ui)
         {
             Entity.DrawAllUI(sb, ui);
+
+            DrawInternalUI(sb, ui);
         }
 
         private static void UpdateCameraMove()
@@ -354,17 +356,21 @@ namespace Raze.Screens.Instances
                         Tile above = map.GetTile(x, y, z + 1);
                         if (above == null)
                         {
-                            if (Rand.Chance(0.1f))
+                            if (Rand.Chance(0.04f))
                             {
-                                t.AddComponent(new Mountain(), 0);
-                            }
-                            else if (Rand.Chance(0.15f))
-                            {
-                                t.AddComponent(new Trees(), 0);
+                                t.AddComponent(TileComponent.Create("Mountain"), 0);
                             }
                             else if (Rand.Chance(0.05f))
                             {
-                                t.AddComponent(new House(), 0);
+                                t.AddComponent(TileComponent.Create("Trees"), 0);
+                            }
+                            else if (Rand.Chance(0.01f))
+                            {
+                                t.AddComponent(TileComponent.Create("House"), 0);
+                            }
+                            else if (Rand.Chance(0.001f))
+                            {
+                                t.AddComponent(TileComponent.Create("RedHouse"), 0);
                             }
                         }
                     }

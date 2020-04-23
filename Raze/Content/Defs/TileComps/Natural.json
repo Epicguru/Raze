@@ -1,0 +1,23 @@
+[
+    {
+        "Name": "Trees",
+        "Parent": "TileComp",
+        "Sprite": "Textures/TileComps/Trees"
+    },
+    {
+        "Name": "Mountain",
+        "Parent": "TileComp",
+        "Sprite": "Textures/TileComps/Mountain"
+    },
+    {
+        "Name": "House",
+        "Parent": "TileComp",
+        "Sprite": "Textures/TileComps/House"
+    },
+    {
+        "Name": "RedHouse",
+        "Parent": "TileComp",
+        "Sprite": "Textures/TileComps/House",
+        "SpriteTint": "255, 100, 100, 100"
+    }
+]

@@ -1,0 +1,18 @@
+[
+    {
+        "Name": "Entity",
+        "Class": "Raze.Entities.EntityDef",
+        "RealClass": "Raze.Entities.Instances.BasicEntity",
+        "SpriteTint": "255, 255, 255, 255",
+        "Sprites": ["Textures/MissingTexture"],
+        "SpawnDirection": "West"
+    },
+    {
+        "Name": "MovingEntity",
+        "Parent": "Entity",
+        "Class": "Raze.Entities.MovingEntityDef",
+        "RealClass": "Raze.Entities.Instances.MovingEntity",
+        "LerpTime": 0.3,
+        "LerpHopHeight" : 0.5
+    }
+]

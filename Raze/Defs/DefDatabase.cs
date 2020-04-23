@@ -172,7 +172,7 @@ namespace Raze.Defs
 
         /// <summary>
         /// Gets a definition given it's id. Will return null with no error logged if not found.
-        /// Note that this will NOT return definitions marked as abstract.
+        /// Note that this will NOT return definitions marked as abstract. See <see cref="GetAbstract(string)"/> for that.
         /// </summary>
         /// <param name="id">The id of the definition, as assigned at runtime.</param>
         /// <returns>The definition or null.</returns>
@@ -181,7 +181,16 @@ namespace Raze.Defs
             return idToDef[id];
         }
 
-        private DefStub GetAbs(string name)
+        /// <summary>
+        /// Gets an abstract definition given it's id. Will return null with no error logged if not found.
+        /// This should only be used for special cases - normally abstract definitions should not used in-game, and they only serve
+        /// as a logical link rather than a real definition.
+        /// Abstract definitions can only be accessed by name because they are not assigned an ID.
+        /// Note that this will NOT return non-abstract definitions. See <see cref="Get(string)"/> for that.
+        /// </summary>
+        /// <param name="name">The name of the definition, as specified in the json file.</param>
+        /// <returns>The abstract definition or null.</returns>
+        public DefStub GetAbstract(string name)
         {
             return namedAbs.TryGetValue(name, out DefStub d) ? d : null;
         }
@@ -192,7 +201,7 @@ namespace Raze.Defs
             if (realDef != null)
                 return GetChildren(realDef, recursive);
 
-            var absDef = GetAbs(defName);
+            var absDef = GetAbstract(defName);
             if (absDef != null)
                 return GetChildren(absDef, recursive);
 
@@ -309,7 +318,7 @@ namespace Raze.Defs
                 if (string.IsNullOrWhiteSpace(def.Parent))
                     continue;
 
-                DefStub parent = Get(def.Parent) ?? GetAbs(def.Parent);
+                DefStub parent = Get(def.Parent) ?? GetAbstract(def.Parent);
 
                 if (parent != null)
                 {
@@ -321,7 +330,7 @@ namespace Raze.Defs
                 if (string.IsNullOrWhiteSpace(def.Parent))
                     continue;
 
-                DefStub parent = Get(def.Parent) ?? GetAbs(def.Parent);
+                DefStub parent = Get(def.Parent) ?? GetAbstract(def.Parent);
 
                 if (parent != null)
                 {

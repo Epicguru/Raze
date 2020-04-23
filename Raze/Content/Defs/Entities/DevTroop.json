@@ -1,0 +1,5 @@
+{
+    "Name": "DevTroop",
+    "Parent": "MovingEntity",
+    "Sprites": ["Textures/Entities/DevTroopNorth", "Textures/Entities/DevTroopEast", "Textures/Entities/DevTroopSouth", "Textures/Entities/DevTroopWest"]
+}

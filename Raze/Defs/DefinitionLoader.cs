@@ -278,7 +278,9 @@ namespace Raze.Defs
 
                     if (hasAdditionalData && !allowAdditionalData)
                     {
-                        OnError?.Invoke($"Def {instance.Name} has {instance.AdditionalData.Count} items of additional data, but it does not have \"AllowAdditionalData\" = true. If this is not a mistake, it is most likely cause by incorrect stub/class inheritance.", null);
+                        OnError?.Invoke($"Def {instance.Name} has {instance.AdditionalData.Count} items of additional data, but it does not have \"AllowAdditionalData\" = true." +
+                                        $" If this is not a mistake, it is most likely cause by incorrect stub/class inheritance.\n"+
+                                        $"Additional data is:\n{string.Join(",\n", Array.ConvertAll(instance.AdditionalData.Values.ToArray(), (jt) => jt.ToString()))}", null);
                     }
                     else
                     {

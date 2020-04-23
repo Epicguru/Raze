@@ -1,0 +1,8 @@
+{
+    "Name": "TileComp",
+    "Class": "Raze.World.Tiles.Components.TileCompDef",
+    "RealClass": "Raze.World.Tiles.Components.BasicTileComponent",
+    "Abstract": true,
+    "Sprite": "Textures/TileComps/House",
+    "SpriteTint": "255, 255, 255, 255"
+}

@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Raze.Defs;
 using Raze.Networking;
+using Raze.World.Tiles;
 
 namespace Raze.World
 {

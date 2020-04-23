@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Raze.World;
+using Raze.World.Tiles;
 
 namespace Raze
 {
