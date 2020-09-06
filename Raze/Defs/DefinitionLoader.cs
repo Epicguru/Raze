@@ -250,6 +250,11 @@ namespace Raze.Defs
 
                 if (type.IsAbstract)
                 {
+                    if(type == typeof(Def))
+                    {
+                        OnError?.Invoke($"{stub.Name}'s class is Def. This is a base abstract class and a non-abstract class should be specified using \"Class\" = \"MyClassName\"", null);
+                        continue;
+                    }
                     OnError?.Invoke($"{stub.Name}'s class {type.Name} is abstract: this is not valid. Either change the C# class or review your json structure.", null);
                     continue;
                 }

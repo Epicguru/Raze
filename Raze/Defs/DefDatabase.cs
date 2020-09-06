@@ -54,11 +54,11 @@ namespace Raze.Defs
         /// json has come from, unlike when loading from file.
         /// </summary>
         /// <param name="jsonFiles">The json definitions. Each definition text can contain multiple stubs in an array.</param>
-        public void AddRaw(IReadOnlyList<string> jsonFiles)
+        public void AddRaw(IEnumerable<string> jsonFiles)
         {
-            if (jsonFiles == null || jsonFiles.Count == 0)
+            if (jsonFiles == null)
             {
-                Debug.Error("Null or empty array passed into AddRaw");
+                Debug.Error("Null enumerable passed into AddRaw");
                 return;
             }
 
@@ -66,11 +66,11 @@ namespace Raze.Defs
             {
                 if (!string.IsNullOrWhiteSpace(txt))
                 {
-                    Loader.Add(new DefinitionFile("from LoadRaw", txt));
+                    Loader.Add(new DefinitionFile("<from_LoadRaw>", txt));
                 }
                 else
                 {
-                    Debug.Error("There is a blank or null entry passed into the array into LoadRaw.");
+                    Debug.Error("There is a blank or null entry passed into the enumerable into LoadRaw.");
                 }
             }
         }
@@ -88,7 +88,7 @@ namespace Raze.Defs
                 return;
             }
 
-            Loader.Add(new DefinitionFile("from LoadRaw", json));
+            Loader.Add(new DefinitionFile("<from_LoadRaw>", json));
         }
 
         /// <summary>
